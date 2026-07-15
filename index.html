@@ -19,8 +19,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <script type="module" crossorigin src="./assets/index-C9Oz3Vnj.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DZmNvpQt.css">
+  <script type="module" crossorigin src="./assets/index-DbI_NirQ.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BasuBEUC.css">
 </head>
 <body>
 
@@ -78,6 +78,16 @@
             <div class="time-label" id="time-total">0:00</div>
           </div>
 
+          <!-- Volume Slider Bar (Same format as Seek Bar) -->
+          <div class="timeline-container volume-timeline-container">
+            <button id="ctrl-mute" class="btn-icon" title="음소거" style="font-size: 11px; width: 40px; display: flex; justify-content: center; align-items: center;"><i class="fa-solid fa-volume-high"></i></button>
+            <div class="slider-wrapper">
+              <input type="range" id="volume-slider" min="0" max="100" value="80" class="custom-slider volume-slider">
+              <div class="slider-progress" id="volume-progress"></div>
+            </div>
+            <div class="time-label" id="volume-percent" style="font-size: 10px; width: 40px; text-align: center;">80%</div>
+          </div>
+
           <!-- Controls Layout -->
           <div class="player-controls">
             <button id="ctrl-shuffle" class="btn-icon" title="셔플"><i class="fa-solid fa-shuffle"></i></button>
@@ -87,16 +97,9 @@
             <button id="ctrl-repeat" class="btn-icon" title="반복"><i class="fa-solid fa-repeat"></i></button>
           </div>
 
-          <!-- Lower Control Bar (Favorite & Volume Toggle) -->
+          <!-- Lower Control Bar (Favorite only) -->
           <div class="player-sub-controls">
             <button id="ctrl-favorite" class="btn-icon" title="즐겨찾기"><i class="fa-regular fa-heart"></i></button>
-            <div class="volume-container">
-              <button id="ctrl-mute" class="btn-icon" title="음소거"><i class="fa-solid fa-volume-high"></i></button>
-              <div class="volume-slider-wrapper">
-                <input type="range" id="volume-slider" min="0" max="100" value="80" class="custom-slider volume-slider">
-                <div class="slider-progress" id="volume-progress"></div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
