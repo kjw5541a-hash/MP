@@ -68,9 +68,20 @@ const importLoadingModal = document.getElementById('import-loading-modal');
 const importLoadingText = document.getElementById('import-loading-text');
 const importProgressText = document.getElementById('import-progress-text');
 
-// --- PWA SERVICE WORKER REGISTRATION ---
+// --- PWA SERVICE WORKER REGISTRATION & CLEANUP ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
+    // Clean up any accidental root-level service workers
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (const registration of registrations) {
+        if (registration.scope === window.location.origin + '/' || registration.scope.endsWith('.github.io/')) {
+          console.log('Unregistering polluting root-level service worker:', registration.scope);
+          registration.unregister();
+        }
+      }
+    });
+
+    // Register folder-scoped service worker
     navigator.serviceWorker.register('./sw.js')
       .then(reg => console.log('Service Worker registered successfully!', reg.scope))
       .catch(err => console.log('Service Worker registration failed:', err));
