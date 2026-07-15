@@ -105,6 +105,23 @@ const importLoadingModal = document.getElementById('import-loading-modal');
 const importLoadingText = document.getElementById('import-loading-text');
 const importProgressText = document.getElementById('import-progress-text');
 
+// New DOM Elements for settings, search, and similar tabs
+const settingsBtn = document.getElementById('settings-btn');
+const settingsModal = document.getElementById('settings-modal');
+const settingsCloseBtn = document.getElementById('settings-close-btn');
+const settingsGeminiKey = document.getElementById('settings-gemini-key');
+const settingsShortcutName = document.getElementById('settings-shortcut-name');
+const settingsSaveBtn = document.getElementById('settings-save-btn');
+
+const youtubeSearchInput = document.getElementById('youtube-search-input');
+const youtubeSearchBtn = document.getElementById('youtube-search-btn');
+const youtubeSearchStatus = document.getElementById('youtube-search-status');
+const youtubeResultsList = document.getElementById('youtube-results-list');
+
+const btnGetSimilar = document.getElementById('btn-get-similar');
+const similarStatus = document.getElementById('similar-status');
+const similarResultsList = document.getElementById('similar-results-list');
+
 // --- PWA SERVICE WORKER REGISTRATION ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -124,8 +141,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Load theme from localStorage
     const savedTheme = localStorage.getItem('mp-theme') || 'neon';
-    if (savedTheme === 'gameboy') {
-      document.body.classList.add('theme-gameboy');
+    if (savedTheme === 'glass') {
+      document.body.classList.add('theme-glass');
       updateThemeToggleIcon(true);
     } else {
       updateThemeToggleIcon(false);
@@ -396,6 +413,14 @@ function loadTrackMetadata(track) {
   seekSlider.value = 0;
   seekProgress.style.width = '0%';
   updatePlayerFavoriteButton();
+
+  // Update Similar Tab Currently Playing song info
+  const similarCurrentTitle = document.getElementById('similar-current-title');
+  const similarCurrentArtist = document.getElementById('similar-current-artist');
+  if (similarCurrentTitle && similarCurrentArtist) {
+    similarCurrentTitle.textContent = track.title;
+    similarCurrentArtist.textContent = track.artist;
+  }
 }
 
 function playTrack(track, trackList, index) {
@@ -640,16 +665,16 @@ async function handleFolderImport(e) {
 
 // --- THEME MANAGEMENT ENGINE ---
 function toggleTheme() {
-  const isGameboy = document.body.classList.toggle('theme-gameboy');
-  localStorage.setItem('mp-theme', isGameboy ? 'gameboy' : 'neon');
-  updateThemeToggleIcon(isGameboy);
+  const isGlass = document.body.classList.toggle('theme-glass');
+  localStorage.setItem('mp-theme', isGlass ? 'glass' : 'neon');
+  updateThemeToggleIcon(isGlass);
 }
 
-function updateThemeToggleIcon(isGameboy) {
-  if (isGameboy) {
+function updateThemeToggleIcon(isGlass) {
+  if (isGlass) {
     btnThemeToggle.innerHTML = '<i class="fa-solid fa-bolt"></i>';
   } else {
-    btnThemeToggle.innerHTML = '<i class="fa-solid fa-gamepad"></i>';
+    btnThemeToggle.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
   }
 }
 
@@ -892,6 +917,49 @@ function setupEventListeners() {
     if (e.target === addToPlaylistModal) {
       closeAddToPlaylistModal();
     }
+    if (e.target === settingsModal) {
+      settingsModal.classList.remove('active');
+    }
+  });
+
+  // Settings modal triggers
+  settingsBtn.addEventListener('click', () => {
+    settingsGeminiKey.value = localStorage.getItem('mp-gemini-key') || '';
+    settingsShortcutName.value = localStorage.getItem('mp-shortcut-name') || '유튜브 음원 다운로드';
+    settingsModal.classList.add('active');
+  });
+
+  settingsCloseBtn.addEventListener('click', () => {
+    settingsModal.classList.remove('active');
+  });
+
+  settingsSaveBtn.addEventListener('click', () => {
+    localStorage.setItem('mp-gemini-key', settingsGeminiKey.value.trim());
+    localStorage.setItem('mp-shortcut-name', settingsShortcutName.value.trim() || '유튜브 음원 다운로드');
+    settingsModal.classList.remove('active');
+    alert('설정이 저장되었습니다.');
+  });
+
+  // YouTube search triggers
+  youtubeSearchBtn.addEventListener('click', () => {
+    searchYouTubeVideos(youtubeSearchInput.value);
+  });
+
+  youtubeSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      searchYouTubeVideos(youtubeSearchInput.value);
+    }
+  });
+
+  // Similar song recommender trigger
+  btnGetSimilar.addEventListener('click', () => {
+    const title = document.getElementById('similar-current-title').textContent;
+    const artist = document.getElementById('similar-current-artist').textContent;
+    if (title === '재생 중인 곡 없음' || !title) {
+      alert('현재 재생 또는 선택된 노래가 없습니다. 보관함에서 노래를 재생하거나 선택해 주세요.');
+      return;
+    }
+    getSimilarSongs(title, artist);
   });
 }
 
@@ -947,4 +1015,184 @@ function escapeHtml(string) {
     "'": '&#039;'
   };
   return String(string).replace(/[&<>"']/g, (m) => map[m]);
+}
+
+// --- YOUTUBE SEARCH & DOWNLOAD INTEGRATION ---
+async function searchYouTubeVideos(query) {
+  if (!query.trim()) return;
+  youtubeSearchStatus.style.display = 'block';
+  youtubeSearchStatus.textContent = '유튜브에서 검색 중...';
+  youtubeResultsList.innerHTML = '';
+  
+  try {
+    const response = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=videos`);
+    if (!response.ok) throw new Error('API response error');
+    
+    const data = await response.json();
+    const items = data.items || [];
+    
+    youtubeSearchStatus.style.display = 'none';
+    
+    if (items.length === 0) {
+      youtubeResultsList.innerHTML = '<li style="text-align:center; padding:20px; opacity:0.6;">검색 결과가 없습니다.</li>';
+      return;
+    }
+    
+    renderYouTubeSearchResults(items);
+  } catch (error) {
+    console.error('YouTube search error:', error);
+    youtubeSearchStatus.textContent = '검색 실패. Piped API 인스턴스 제한이 걸렸을 수 있으니 다시 시도해 주세요.';
+  }
+}
+
+function renderYouTubeSearchResults(items) {
+  youtubeResultsList.innerHTML = '';
+  
+  items.forEach(item => {
+    const videoId = item.videoId || (item.url ? item.url.split('v=')[1] : '');
+    if (!videoId) return;
+    
+    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    
+    const li = document.createElement('li');
+    li.className = 'track-item glass-card';
+    li.style.display = 'flex';
+    li.style.alignItems = 'center';
+    li.style.justifyContent = 'space-between';
+    li.style.padding = '10px 15px';
+    li.style.marginBottom = '10px';
+    li.style.borderRadius = '12px';
+    
+    li.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0;">
+        <img src="${item.thumbnail || 'https://via.placeholder.com/120x90?text=Video'}" alt="Thumbnail" style="width: 60px; height: 45px; border-radius: 6px; object-fit: cover;">
+        <div style="min-width:0; flex:1;">
+          <div class="track-title" style="font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(item.title)}</div>
+          <div class="track-artist" style="font-size: 0.75rem; opacity: 0.6; margin-top: 3px;">${escapeHtml(item.uploaderName || 'Unknown Artist')}</div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-download-track" data-url="${videoUrl}" style="border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; display:flex; align-items:center; gap:4px; margin-left: 10px;">
+        <i class="fa-solid fa-cloud-arrow-down"></i> 다운로드
+      </button>
+    `;
+    
+    li.querySelector('.btn-download-track').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const url = e.currentTarget.dataset.url;
+      handleDownloadVideo(url);
+    });
+    
+    youtubeResultsList.appendChild(li);
+  });
+}
+
+async function handleDownloadVideo(videoUrl) {
+  try {
+    await navigator.clipboard.writeText(videoUrl);
+    
+    const shortcutName = localStorage.getItem('mp-shortcut-name') || '유튜브 음원 다운로드';
+    const shortcutUrl = `shortcuts://run-shortcut?name=${encodeURIComponent(shortcutName)}&input=${encodeURIComponent(videoUrl)}`;
+    
+    alert(`유튜브 주소가 클립보드에 복사되었습니다!\n\n단축어 [${shortcutName}]를 실행하기 위해 단축어 앱으로 이동합니다. 다운로드가 완료되면 보관함의 '파일' 또는 '폴더' 가져오기를 진행해 주세요.`);
+    
+    window.location.href = shortcutUrl;
+  } catch (err) {
+    console.error('Download bridge error:', err);
+    alert('클립보드 복사 또는 단축어 실행에 실패했습니다.');
+  }
+}
+
+// --- GEMINI AI RECOMMENDATIONS ---
+async function getSimilarSongs(title, artist) {
+  const apiKey = localStorage.getItem('mp-gemini-key') || import.meta.env.VITE_GEMINI_API_KEY || '';
+  if (!apiKey) {
+    alert('Gemini API Key가 설정되지 않았습니다.\n\n상단 로고 옆의 [설정(톱니바퀴)] 아이콘을 눌러 구글 AI 스튜디오에서 발급받은 무료 API Key를 먼저 저장해 주세요.');
+    return;
+  }
+  
+  similarStatus.style.display = 'block';
+  similarStatus.textContent = 'Gemini AI가 유사한 음악을 분석 중...';
+  similarResultsList.innerHTML = '';
+  
+  try {
+    const prompt = `현재 재생중인 곡: '${title} - ${artist}'. 이 곡과 분위기, 장르, 템포가 비슷한 노래 5곡을 추천해줘. JSON 형식으로만 응답해야 해. JSON 구조: {"recommendations": [{"title": "노래 제목", "artist": "아티스트 이름", "reason": "이 노래를 추천하는 1줄 이유"}]}`;
+    
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          responseMimeType: 'application/json'
+        }
+      })
+    });
+    
+    if (!response.ok) throw new Error('Gemini API request failed');
+    
+    const resData = await response.json();
+    const responseText = resData.candidates[0].content.parts[0].text;
+    const parsedData = JSON.parse(responseText);
+    const recommendations = parsedData.recommendations || [];
+    
+    similarStatus.style.display = 'none';
+    
+    if (recommendations.length === 0) {
+      similarResultsList.innerHTML = '<li style="text-align:center; padding:20px; opacity:0.6;">추천 결과가 없습니다.</li>';
+      return;
+    }
+    
+    renderSimilarSongs(recommendations);
+  } catch (error) {
+    console.error('Gemini recommendation error:', error);
+    similarStatus.textContent = '추천 곡을 불러오지 못했습니다. API 키가 정확한지 확인해 주세요.';
+  }
+}
+
+function renderSimilarSongs(songs) {
+  similarResultsList.innerHTML = '';
+  
+  songs.forEach(song => {
+    const li = document.createElement('li');
+    li.className = 'track-item glass-card recommend-card';
+    li.style.display = 'flex';
+    li.style.alignItems = 'center';
+    li.style.justifyContent = 'space-between';
+    li.style.padding = '12px 15px';
+    li.style.marginBottom = '10px';
+    li.style.borderRadius = '12px';
+    
+    li.innerHTML = `
+      <div style="min-width:0; flex:1;">
+        <div class="track-title" style="font-weight: 700; font-size: 0.95rem;">${escapeHtml(song.title)}</div>
+        <div class="track-artist" style="font-size: 0.8rem; opacity: 0.7; margin-top: 2px;">${escapeHtml(song.artist)}</div>
+        <div style="font-size: 0.75rem; opacity: 0.5; margin-top: 4px; line-height:1.3; font-style:italic;">"${escapeHtml(song.reason)}"</div>
+      </div>
+      <button class="btn btn-secondary btn-search-recommend" data-query="${song.title} ${song.artist}" style="border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; display:flex; align-items:center; gap:4px; margin-left: 15px;">
+        <i class="fa-solid fa-magnifying-glass"></i> 검색
+      </button>
+    `;
+    
+    li.querySelector('.btn-search-recommend').addEventListener('click', (e) => {
+      const searchQuery = e.currentTarget.dataset.query;
+      
+      // Navigate to search view
+      const searchTabButton = document.querySelector('.nav-item[data-view="view-search"]');
+      if (searchTabButton) {
+        searchTabButton.click();
+      }
+      
+      // Auto fill and search
+      youtubeSearchInput.value = searchQuery;
+      searchYouTubeVideos(searchQuery);
+    });
+    
+    similarResultsList.appendChild(li);
+  });
 }

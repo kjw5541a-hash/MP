@@ -32,9 +32,9 @@
     <!-- Top Action Bar -->
     <header class="app-header">
       <div class="logo-area">
-        <img src="/icon-192.png" alt="MP Logo" class="header-logo">
-        <span class="logo-text">MP</span>
-        <button id="theme-toggle" class="btn-icon theme-toggle-btn" title="테마 변경"><i class="fa-solid fa-gamepad"></i></button>
+        <span class="logo-text" id="logo-brand">JWMusicPlayer</span>
+        <button id="theme-toggle" class="btn-icon theme-toggle-btn" title="테마 변경"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+        <button id="settings-btn" class="btn-icon settings-btn" title="설정"><i class="fa-solid fa-gear"></i></button>
       </div>
       <div class="header-actions">
         <label for="file-import" class="btn btn-primary" id="import-btn">
@@ -163,6 +163,46 @@
         </div>
       </section>
 
+      <!-- VIEW 5: SEARCH -->
+      <section id="view-search" class="content-view">
+        <div class="view-header">
+          <h2>노래 검색 (YouTube)</h2>
+        </div>
+        <div class="search-tab-wrapper">
+          <div class="search-input-group" style="display: flex; gap: 8px; margin-bottom: 15px;">
+            <input type="text" id="youtube-search-input" class="search-bar" placeholder="노래 제목 또는 아티스트 입력..." style="flex: 1; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.05); color: var(--text-main); outline: none;">
+            <button id="youtube-search-btn" class="btn btn-primary" style="border-radius: 12px; padding: 0 20px;"><i class="fa-solid fa-magnifying-glass"></i> 검색</button>
+          </div>
+          <div class="search-status" id="youtube-search-status" style="margin: 20px 0; font-size: 0.9rem; opacity: 0.8; text-align: center; display: none;">유튜브에서 검색 중...</div>
+          <div class="search-results-container">
+            <ul id="youtube-results-list" class="track-list">
+              <!-- Search results dynamically rendered here -->
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 6: SIMILAR RECOMMENDATIONS -->
+      <section id="view-similar" class="content-view">
+        <div class="view-header">
+          <h2>비슷한 노래 추천</h2>
+        </div>
+        <div class="similar-tab-wrapper">
+          <div class="currently-playing-box glass-card" style="padding: 20px; margin-bottom: 20px; border-radius: 16px; text-align: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);">
+            <div style="font-size: 0.75rem; opacity: 0.5; margin-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase;">현재 재생 중인 곡 기준</div>
+            <h3 id="similar-current-title" style="margin: 0; font-size: 1.15rem; font-weight: 700;">재생 중인 곡 없음</h3>
+            <p id="similar-current-artist" style="margin: 6px 0 0 0; font-size: 0.9rem; opacity: 0.7;">목록에서 노래를 먼저 재생해 주세요</p>
+            <button id="btn-get-similar" class="btn btn-primary" style="margin-top: 16px; width: 100%; border-radius: 12px; justify-content: center; padding: 12px;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 추천 받기</button>
+          </div>
+          <div class="search-status" id="similar-status" style="margin: 20px 0; font-size: 0.9rem; opacity: 0.8; text-align: center; display: none;">Gemini AI가 음악을 분석 중...</div>
+          <div class="similar-results-container">
+            <ul id="similar-results-list" class="track-list">
+              <!-- Recommended tracks rendered here -->
+            </ul>
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <!-- Bottom Navigation Bar (Glassmorphic) -->
@@ -182,6 +222,14 @@
       <button class="nav-item" data-view="view-favorites">
         <i class="fa-solid fa-heart"></i>
         <span>즐겨찾기</span>
+      </button>
+      <button class="nav-item" data-view="view-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>노래검색</span>
+      </button>
+      <button class="nav-item" data-view="view-similar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>비슷한노래</span>
       </button>
     </nav>
 
@@ -208,6 +256,33 @@
       <div class="spinner"></div>
       <h3 id="import-loading-text">음원 가져오는 중...</h3>
       <p id="import-progress-text">0 / 0 파일 완료</p>
+    </div>
+  </div>
+
+  <!-- Modal: Settings -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content glass-card">
+      <div class="modal-header">
+        <h3>설정</h3>
+        <button id="settings-close-btn" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="padding: 15px 0;">
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Gemini API Key</label>
+          <input type="password" id="settings-gemini-key" class="search-bar" placeholder="Google Gemini API Key 입력..." style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.05); color: var(--text-main); outline: none;">
+          <small style="display: block; margin-top: 5px; font-size: 0.75rem; opacity: 0.6; color: var(--text-muted);">
+            * 구글 AI 스튜디오에서 무료 API 키를 발급받을 수 있습니다. 키는 기기 로컬에만 안전하게 저장됩니다.
+          </small>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-main);">iOS 다운로드 단축어 이름</label>
+          <input type="text" id="settings-shortcut-name" class="search-bar" placeholder="예: 유튜브 음원 다운로드" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.05); color: var(--text-main); outline: none;">
+          <small style="display: block; margin-top: 5px; font-size: 0.75rem; opacity: 0.6; color: var(--text-muted);">
+            * 유튜브 검색 다운로드 클릭 시 실행할 iOS 단축어 이름입니다.
+          </small>
+        </div>
+        <button id="settings-save-btn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; border-radius: 12px;"><i class="fa-solid fa-floppy-disk"></i> 저장</button>
+      </div>
     </div>
   </div>
 
