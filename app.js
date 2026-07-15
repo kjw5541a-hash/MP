@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '2.7'; // Increment to force automatic updates on user devices
+const APP_VERSION = '2.8'; // Increment to force automatic updates on user devices
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -49,7 +49,8 @@ let state = {
   activeView: 'view-player',
   currentPlaylistId: null,
   activeTrackIdForModal: null,
-  audioObjectUrl: null
+  audioObjectUrl: null,
+  hasLoadedTrack: false
 };
 
 // Create Native HTML5 Audio Object
@@ -119,16 +120,14 @@ if ('serviceWorker' in navigator) {
 
     // Register folder-scoped service worker with cache-busting query parameter
     navigator.serviceWorker.register(`./sw.js?v=${APP_VERSION}`)
-      .then(reg => console.log('Service Worker registered successfully!', reg.scope))
+      .then(reg => {
+        console.log('Service Worker registered successfully!', reg.scope);
+        // If SW is installed but not yet controlling, reload once
+        if (reg.active && !navigator.serviceWorker.controller) {
+          window.location.reload();
+        }
+      })
       .catch(err => console.log('Service Worker registration failed:', err));
-  });
-
-  // Ensure the active service worker controls the page immediately on first load
-  navigator.serviceWorker.ready.then(() => {
-    if (!navigator.serviceWorker.controller) {
-      console.log('Service Worker is active but page is not controlled. Reloading to claim control...');
-      window.location.reload();
-    }
   });
 }
 
@@ -430,6 +429,7 @@ function playTrack(track, trackList, index) {
 
   // Always use the folder-scoped API URL to guarantee iOS Lock Screen routes back to /MP/ PWA!
   audio.src = `./api/play?id=${track.id}`;
+  state.hasLoadedTrack = true;
   
   // Play Audio
   audio.play()
@@ -455,8 +455,8 @@ function togglePlay() {
     state.isPlaying = false;
     updatePlayButtonUI();
   } else {
-    // If no source is loaded (initial state), load first song in list
-    if (!audio.src && state.currentTrackList.length > 0 && state.currentIndex === -1) {
+    // If no track has been loaded yet, start from beginning of list
+    if (!state.hasLoadedTrack && state.currentTrackList.length > 0) {
       playTrack(state.currentTrackList[0], state.currentTrackList, 0);
       return;
     }
@@ -464,7 +464,7 @@ function togglePlay() {
       state.isPlaying = true;
       updatePlayButtonUI();
     }).catch(err => {
-      console.error(err);
+      console.error('togglePlay error:', err);
       state.isPlaying = false;
       updatePlayButtonUI();
     });

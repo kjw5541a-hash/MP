@@ -1,33 +1,19 @@
-const CACHE_NAME = 'mp-player-cache-v2';
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './style.css',
-  './db.js',
-  './app.js',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
+const CACHE_NAME = 'mp-player-cache-v3';
 
-// Install Event
+// Install Event - Skip pre-caching to avoid build asset mismatch issues
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Service Worker: Caching App Shell');
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
-  );
+  console.log('Service Worker: Installing v3...');
+  self.skipWaiting();
 });
 
-// Activate Event
+// Activate Event - Claim clients immediately & clear old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('Service Worker: Clearing Old Cache');
+            console.log('Service Worker: Clearing Old Cache:', cache);
             return caches.delete(cache);
           }
         })
@@ -50,10 +36,10 @@ function getTrackBlobFromDB(trackId) {
       const store = transaction.objectStore('tracks');
       const getReq = store.get(Number(trackId));
       getReq.onsuccess = () => {
-        if (getReq.result) {
+        if (getReq.result && getReq.result.audioBlob) {
           resolve(getReq.result.audioBlob);
         } else {
-          reject(new Error('Track not found'));
+          reject(new Error('Track not found: ' + trackId));
         }
       };
       getReq.onerror = () => reject(getReq.error);
@@ -62,79 +48,70 @@ function getTrackBlobFromDB(trackId) {
   });
 }
 
-// Fetch Event (Cache First with Range Request/IndexedDB Streaming for audio)
+// Fetch Event
 self.addEventListener('fetch', (event) => {
-  // 1. Intercept media stream requests to solve iOS PWA blob scope matching redirect bugs
-  if (event.request.url.includes('/api/play?id=')) {
+  // 1. Intercept audio streaming API requests
+  if (event.request.url.includes('/api/play')) {
     const url = new URL(event.request.url);
     const trackId = url.searchParams.get('id');
+
+    if (!trackId) {
+      event.respondWith(new Response('Missing track id', { status: 400 }));
+      return;
+    }
 
     event.respondWith(
       getTrackBlobFromDB(trackId)
         .then((blob) => {
           const rangeHeader = event.request.headers.get('Range');
-          
+          const contentType = blob.type || 'audio/mp4';
+
           if (rangeHeader) {
-            // Parse Range header (e.g., "bytes=0-1000000" or "bytes=0-")
-            const parts = rangeHeader.replace(/bytes=/, "").split("-");
+            const parts = rangeHeader.replace(/bytes=/, '').split('-');
             const start = parseInt(parts[0], 10);
             const end = parts[1] ? parseInt(parts[1], 10) : blob.size - 1;
-            
-            // Slice the blob to return only the requested chunk
-            const chunk = blob.slice(start, end + 1);
-            
+            const clampedEnd = Math.min(end, blob.size - 1);
+            const chunk = blob.slice(start, clampedEnd + 1);
+
             return new Response(chunk, {
               status: 206,
               statusText: 'Partial Content',
               headers: {
-                'Content-Type': blob.type || 'audio/m4a',
-                'Content-Range': `bytes ${start}-${end}/${blob.size}`,
-                'Content-Length': chunk.size.toString(),
+                'Content-Type': contentType,
+                'Content-Range': `bytes ${start}-${clampedEnd}/${blob.size}`,
+                'Content-Length': String(clampedEnd - start + 1),
                 'Accept-Ranges': 'bytes'
               }
             });
           } else {
-            // Full media file request
             return new Response(blob, {
+              status: 200,
               headers: {
-                'Content-Type': blob.type || 'audio/m4a',
-                'Content-Length': blob.size.toString(),
+                'Content-Type': contentType,
+                'Content-Length': String(blob.size),
                 'Accept-Ranges': 'bytes'
               }
             });
           }
         })
         .catch((err) => {
-          console.error('Service Worker: API media stream failed:', err);
-          return new Response('Media not found: ' + err.message, { status: 404 });
+          console.error('SW audio stream error:', err);
+          return new Response('Track not found: ' + err.message, { status: 404 });
         })
     );
     return;
   }
 
-  // 2. Default Cache-first logic for static assets
+  // 2. All other requests - network first (no pre-caching needed since Vite handles hashed assets)
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200) {
-          return networkResponse;
-        }
-
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
-        return networkResponse;
-      }).catch(() => {
-        console.log('Service Worker: Fetch failed, offline.');
-      });
-    })
+    fetch(event.request)
+      .then((response) => {
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });
