@@ -46,6 +46,7 @@ const btnFavorite = document.getElementById('ctrl-favorite');
 const btnMute = document.getElementById('ctrl-mute');
 const volumeSlider = document.getElementById('volume-slider');
 const volumeProgress = document.getElementById('volume-progress');
+const volumePercent = document.getElementById('volume-percent');
 
 // Views Lists Containers
 const libraryList = document.getElementById('library-list');
@@ -804,11 +805,13 @@ function setupEventListeners() {
       btnMute.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
       volumeProgress.style.width = '0%';
       volumeSlider.value = 0;
+      if (volumePercent) volumePercent.textContent = '0%';
     } else {
       btnMute.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-      const volumePercent = state.volume * 100;
-      volumeProgress.style.width = `${volumePercent}%`;
-      volumeSlider.value = volumePercent;
+      const volumePercentVal = state.volume * 100;
+      volumeProgress.style.width = `${volumePercentVal}%`;
+      volumeSlider.value = volumePercentVal;
+      if (volumePercent) volumePercent.textContent = `${Math.round(volumePercentVal)}%`;
     }
   });
 
@@ -819,6 +822,7 @@ function setupEventListeners() {
     audio.muted = false;
     btnMute.innerHTML = vol === 0 ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
     volumeProgress.style.width = `${e.target.value}%`;
+    if (volumePercent) volumePercent.textContent = `${e.target.value}%`;
   });
 
   // Playlists Subview Back Button
