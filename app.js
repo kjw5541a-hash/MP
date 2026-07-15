@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '2.5'; // Increment to force automatic updates on user devices
+const APP_VERSION = '2.6'; // Increment to force automatic updates on user devices
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -121,6 +121,14 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register(`./sw.js?v=${APP_VERSION}`)
       .then(reg => console.log('Service Worker registered successfully!', reg.scope))
       .catch(err => console.log('Service Worker registration failed:', err));
+  });
+
+  // Ensure the active service worker controls the page immediately on first load
+  navigator.serviceWorker.ready.then(() => {
+    if (!navigator.serviceWorker.controller) {
+      console.log('Service Worker is active but page is not controlled. Reloading to claim control...');
+      window.location.reload();
+    }
   });
 }
 
@@ -414,19 +422,14 @@ function playTrack(track, trackList, index) {
   
   loadTrackMetadata(track);
   
-  // Revoke old blob URL to free memory
+  // Revoke old blob URL to free memory if any exists
   if (state.audioObjectUrl) {
     URL.revokeObjectURL(state.audioObjectUrl);
     state.audioObjectUrl = null;
   }
 
-  // Set audio source (using Scoped SW URL if available, fallback to Blob URL)
-  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-    audio.src = `./api/play?id=${track.id}`;
-  } else {
-    state.audioObjectUrl = URL.createObjectURL(track.audioBlob);
-    audio.src = state.audioObjectUrl;
-  }
+  // Always use the folder-scoped API URL to guarantee iOS Lock Screen routes back to /MP/ PWA!
+  audio.src = `./api/play?id=${track.id}`;
   
   // Play Audio
   audio.play()
