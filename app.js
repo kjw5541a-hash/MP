@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '2.6'; // Increment to force automatic updates on user devices
+const APP_VERSION = '2.7'; // Increment to force automatic updates on user devices
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
