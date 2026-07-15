@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>MP - Music Player</title>
+  
+  <!-- PWA Manifest & Theme -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MP">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <meta name="theme-color" content="#0d0e15">
+
+  <!-- Google Fonts & FontAwesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script type="module" crossorigin src="./assets/index-C9Oz3Vnj.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DZmNvpQt.css">
+</head>
+<body>
+
+  <!-- Background Glowing Orbs -->
+  <div class="bg-glow orb-1"></div>
+  <div class="bg-glow orb-2"></div>
+
+  <div class="app-container">
+    
+    <!-- Top Action Bar -->
+    <header class="app-header">
+      <div class="logo-area">
+        <img src="./icon-192.png" alt="MP Logo" class="header-logo">
+        <span class="logo-text">MP</span>
+        <button id="theme-toggle" class="btn-icon theme-toggle-btn" title="테마 변경"><i class="fa-solid fa-gamepad"></i></button>
+      </div>
+      <div class="header-actions">
+        <label for="file-import" class="btn btn-primary" id="import-btn">
+          <i class="fa-solid fa-plus"></i> 파일
+        </label>
+        <input type="file" id="file-import" multiple accept="audio/m4a,audio/x-m4a,audio/mp4,audio/flac,audio/x-flac,audio/mp3,audio/mpeg,audio/ogg,audio/wav" style="display: none;">
+        
+        <label for="folder-import" class="btn btn-secondary" id="import-folder-btn">
+          <i class="fa-solid fa-folder-open"></i> 폴더
+        </label>
+        <input type="file" id="folder-import" webkitdirectory directory multiple style="display: none;">
+      </div>
+    </header>
+
+    <!-- Main Navigation Content Views -->
+    <main class="app-content">
+      
+      <!-- VIEW 1: NOW PLAYING -->
+      <section id="view-player" class="content-view active">
+        <div class="player-wrapper">
+          <!-- Album Art (Glass card) -->
+          <div class="album-art-container">
+            <div class="album-art-glow"></div>
+            <img src="./icon-512.png" alt="Album Art" id="player-art" class="player-art">
+          </div>
+
+          <!-- Track Info -->
+          <div class="track-info">
+            <h1 id="player-title" class="player-title">재생할 곡을 선택하세요</h1>
+            <p id="player-artist" class="player-artist">곡 목록에서 파일을 가져오거나 추가해 주세요</p>
+          </div>
+
+          <!-- Timeline Seek Bar -->
+          <div class="timeline-container">
+            <div class="time-label" id="time-current">0:00</div>
+            <div class="slider-wrapper">
+              <input type="range" id="seek-slider" min="0" max="100" value="0" class="custom-slider">
+              <div class="slider-progress" id="seek-progress"></div>
+            </div>
+            <div class="time-label" id="time-total">0:00</div>
+          </div>
+
+          <!-- Controls Layout -->
+          <div class="player-controls">
+            <button id="ctrl-shuffle" class="btn-icon" title="셔플"><i class="fa-solid fa-shuffle"></i></button>
+            <button id="ctrl-prev" class="btn-icon btn-secondary" title="이전곡"><i class="fa-solid fa-backward-step"></i></button>
+            <button id="ctrl-play" class="btn-icon btn-play" title="재생/일시정지"><i class="fa-solid fa-play"></i></button>
+            <button id="ctrl-next" class="btn-icon btn-secondary" title="다음곡"><i class="fa-solid fa-forward-step"></i></button>
+            <button id="ctrl-repeat" class="btn-icon" title="반복"><i class="fa-solid fa-repeat"></i></button>
+          </div>
+
+          <!-- Lower Control Bar (Favorite & Volume Toggle) -->
+          <div class="player-sub-controls">
+            <button id="ctrl-favorite" class="btn-icon" title="즐겨찾기"><i class="fa-regular fa-heart"></i></button>
+            <div class="volume-container">
+              <button id="ctrl-mute" class="btn-icon" title="음소거"><i class="fa-solid fa-volume-high"></i></button>
+              <div class="volume-slider-wrapper">
+                <input type="range" id="volume-slider" min="0" max="100" value="80" class="custom-slider volume-slider">
+                <div class="slider-progress" id="volume-progress"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: LIBRARY (ALL SONGS) -->
+      <section id="view-library" class="content-view">
+        <div class="view-header">
+          <h2>전체 보관함</h2>
+          <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="library-search" placeholder="곡명 또는 아티스트 검색...">
+          </div>
+        </div>
+        <div class="track-list-container">
+          <div id="library-empty" class="empty-state">
+            <i class="fa-solid fa-music"></i>
+            <p>보관함이 비어 있습니다.<br>우측 상단의 '음원 가져오기'를 눌러주세요.</p>
+          </div>
+          <ul id="library-list" class="track-list">
+            <!-- Dynamic track list here -->
+          </ul>
+        </div>
+      </section>
+
+      <!-- VIEW 3: PLAYLISTS -->
+      <section id="view-playlists" class="content-view">
+        <div class="view-header">
+          <h2>플레이리스트</h2>
+          <button id="btn-create-playlist" class="btn btn-secondary">
+            <i class="fa-solid fa-folder-plus"></i> 새 리스트 만들기
+          </button>
+        </div>
+        
+        <!-- Playlist Grid -->
+        <div class="playlist-grid-container">
+          <div id="playlists-empty" class="empty-state">
+            <i class="fa-solid fa-list-ul"></i>
+            <p>생성된 플레이리스트가 없습니다.</p>
+          </div>
+          <div id="playlists-grid" class="playlist-grid">
+            <!-- Dynamic playlists grid here -->
+          </div>
+        </div>
+
+        <!-- Playlist Tracks Subview (hidden by default) -->
+        <div id="playlist-detail-subview" class="sub-view">
+          <div class="sub-view-header">
+            <button id="btn-playlist-back" class="btn-icon"><i class="fa-solid fa-arrow-left"></i></button>
+            <h3 id="playlist-detail-title">플레이리스트 명</h3>
+            <button id="btn-delete-playlist-action" class="btn-icon btn-danger-icon" title="플레이리스트 삭제"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+          <ul id="playlist-detail-list" class="track-list">
+            <!-- Dynamic playlist tracks list -->
+          </ul>
+        </div>
+      </section>
+
+      <!-- VIEW 4: FAVORITES -->
+      <section id="view-favorites" class="content-view">
+        <div class="view-header">
+          <h2>즐겨찾기</h2>
+        </div>
+        <div class="track-list-container">
+          <div id="favorites-empty" class="empty-state">
+            <i class="fa-solid fa-heart"></i>
+            <p>즐겨찾기한 곡이 없습니다.<br>곡 목록에서 하트를 눌러보세요.</p>
+          </div>
+          <ul id="favorites-list" class="track-list">
+            <!-- Dynamic favorite track list -->
+          </ul>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar (Glassmorphic) -->
+    <nav class="app-nav">
+      <button class="nav-item active" data-view="view-player">
+        <i class="fa-solid fa-circle-play"></i>
+        <span>재생 중</span>
+      </button>
+      <button class="nav-item" data-view="view-library">
+        <i class="fa-solid fa-music"></i>
+        <span>보관함</span>
+      </button>
+      <button class="nav-item" data-view="view-playlists">
+        <i class="fa-solid fa-list-ul"></i>
+        <span>재생목록</span>
+      </button>
+      <button class="nav-item" data-view="view-favorites">
+        <i class="fa-solid fa-heart"></i>
+        <span>즐겨찾기</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Modal: Add Track to Playlist -->
+  <div id="add-to-playlist-modal" class="modal">
+    <div class="modal-content glass-card">
+      <div class="modal-header">
+        <h3>플레이리스트에 추가</h3>
+        <button id="modal-close-btn" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <ul id="modal-playlists-list" class="modal-list">
+          <!-- Playlists list to select from -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Import Loading Indicator -->
+  <div id="import-loading-modal" class="modal loader-modal">
+    <div class="modal-content glass-card loader-card">
+      <div class="spinner"></div>
+      <h3 id="import-loading-text">음원 가져오는 중...</h3>
+      <p id="import-progress-text">0 / 0 파일 완료</p>
+    </div>
+  </div>
+
+  <!-- Core JavaScript Modules -->
+</body>
+</html>
