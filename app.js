@@ -101,6 +101,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tracks = await db.getAllTracks();
     if (tracks.length > 0) {
       loadTrackMetadata(tracks[0]);
+      state.currentTrackList = tracks;
+      state.currentIndex = 0;
     }
   } catch (error) {
     console.error('Initialization error:', error);
@@ -396,6 +398,7 @@ function togglePlay() {
   if (state.isPlaying) {
     audio.pause();
     state.isPlaying = false;
+    updatePlayButtonUI();
   } else {
     // If no source is loaded (initial state), load first song in list
     if (!audio.src && state.currentTrackList.length > 0 && state.currentIndex === -1) {
@@ -404,9 +407,13 @@ function togglePlay() {
     }
     audio.play().then(() => {
       state.isPlaying = true;
-    }).catch(err => console.error(err));
+      updatePlayButtonUI();
+    }).catch(err => {
+      console.error(err);
+      state.isPlaying = false;
+      updatePlayButtonUI();
+    });
   }
-  updatePlayButtonUI();
 }
 
 function nextTrack() {
@@ -802,9 +809,14 @@ function setupEventListeners() {
   btnFavorite.addEventListener('click', async () => {
     if (state.currentIndex < 0) return;
     const currentTrack = state.currentTrackList[state.currentIndex];
+    if (!currentTrack) return;
     
     const isFav = btnFavorite.classList.contains('active');
     await db.toggleFavorite(currentTrack.id, !isFav);
+    
+    // Update the in-memory track object to prevent display delays/state mismatches
+    currentTrack.isFavorite = !isFav;
+    
     await renderAllViews();
     updatePlayerFavoriteButton();
   });

@@ -918,13 +918,112 @@ body.theme-gameboy {
 }
 
 /* Force pixel font on all text for Game Boy theme */
-body.theme-gameboy * {
+body.theme-gameboy *,
+body.theme-gameboy button,
+body.theme-gameboy input,
+body.theme-gameboy textarea {
   font-family: 'Press Start 2P', monospace !important;
   border-radius: 0px !important;
   box-shadow: none !important;
   text-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/* Hide original FontAwesome icons inside buttons in Game Boy theme to replace with Pixel Art SVG backgrounds */
+body.theme-gameboy i,
+body.theme-gameboy .fa-solid,
+body.theme-gameboy .fa-regular {
+  display: none !important;
+}
+
+/* Pixel Art SVG Background styling */
+body.theme-gameboy .btn-icon,
+body.theme-gameboy .nav-item,
+body.theme-gameboy .action-fav,
+body.theme-gameboy .action-add-playlist,
+body.theme-gameboy .action-delete,
+body.theme-gameboy .theme-toggle-btn {
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 20px 20px !important;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Button specific Pixel SVGs */
+/* Play (triangle) */
+body.theme-gameboy #ctrl-play:has(.fa-play) {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='2' y='1' width='1' height='6'/><rect x='3' y='2' width='1' height='4'/><rect x='4' y='3' width='1' height='2'/></svg>") !important;
+  background-size: 20px 20px !important;
+}
+/* Pause (two bars) */
+body.theme-gameboy #ctrl-play:has(.fa-pause) {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='2' y='1' width='2' height='6'/><rect x='5' y='1' width='2' height='6'/></svg>") !important;
+  background-size: 20px 20px !important;
+}
+/* Prev */
+body.theme-gameboy #ctrl-prev {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='1' width='1' height='6'/><rect x='2' y='3' width='1' height='2'/><rect x='3' y='2' width='1' height='4'/><rect x='4' y='1' width='1' height='6'/><rect x='5' y='3' width='1' height='2'/><rect x='6' y='2' width='1' height='4'/><rect x='7' y='1' width='1' height='6'/></svg>") !important;
+}
+/* Next */
+body.theme-gameboy #ctrl-next {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='0' y='1' width='1' height='6'/><rect x='1' y='2' width='1' height='4'/><rect x='2' y='3' width='1' height='2'/><rect x='3' y='1' width='1' height='6'/><rect x='4' y='2' width='1' height='4'/><rect x='5' y='3' width='1' height='2'/><rect x='6' y='1' width='1' height='6'/></svg>") !important;
+}
+/* Shuffle */
+body.theme-gameboy #ctrl-shuffle {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='2' width='1' height='1'/><rect x='2' y='3' width='1' height='1'/><rect x='3' y='4' width='2' height='1'/><rect x='5' y='3' width='1' height='1'/><rect x='6' y='2' width='1' height='1'/><rect x='1' y='5' width='1' height='1'/><rect x='2' y='4' width='1' height='1'/><rect x='5' y='4' width='1' height='1'/><rect x='6' y='5' width='1' height='1'/></svg>") !important;
+  background-size: 14px 14px !important;
+}
+/* Repeat */
+body.theme-gameboy #ctrl-repeat {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='2' width='6' height='1'/><rect x='6' y='3' width='1' height='3'/><rect x='1' y='5' width='6' height='1'/><rect x='1' y='3' width='1' height='2'/><rect x='0' y='3' width='1' height='1'/><rect x='7' y='4' width='1' height='1'/></svg>") !important;
+  background-size: 14px 14px !important;
+}
+/* Favorite Empty */
+body.theme-gameboy #ctrl-favorite,
+body.theme-gameboy .action-fav {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='2' width='1' height='3'/><rect x='6' y='2' width='1' height='3'/><rect x='2' y='1' width='1' height='1'/><rect x='5' y='1' width='1' height='1'/><rect x='3' y='2' width='2' height='1'/><rect x='2' y='5' width='1' height='1'/><rect x='5' y='5' width='1' height='1'/><rect x='3' y='6' width='2' height='1'/><rect x='4' y='7' width='1' height='1'/></svg>") !important;
+}
+/* Favorite Active */
+body.theme-gameboy #ctrl-favorite.active,
+body.theme-gameboy .action-fav.active {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='2' width='6' height='3'/><rect x='2' y='1' width='1' height='1'/><rect x='5' y='1' width='1' height='1'/><rect x='2' y='5' width='4' height='1'/><rect x='3' y='6' width='2' height='1'/><rect x='4' y='7' width='1' height='1'/></svg>") !important;
+}
+/* Theme Toggle / Gamepad */
+body.theme-gameboy .theme-toggle-btn {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='3' width='6' height='2'/><rect x='3' y='1' width='2' height='6'/><rect x='1' y='1' width='1' height='1'/><rect x='6' y='1' width='1' height='1'/></svg>") !important;
+}
+/* Delete Trash */
+body.theme-gameboy .action-delete {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='1' width='6' height='1'/><rect x='2' y='2' width='4' height='5'/><rect x='3' y='0' width='2' height='1'/><rect x='3' y='3' width='1' height='3'/><rect x='4' y='3' width='1' height='3'/></svg>") !important;
+}
+/* Playlist Add */
+body.theme-gameboy .action-add-playlist {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='1' width='4' height='1'/><rect x='1' y='3' width='4' height='1'/><rect x='1' y='5' width='4' height='1'/><rect x='6' y='3' width='1' height='5'/><rect x='4' y='5' width='5' height='1'/></svg>") !important;
+}
+
+/* Nav Bar specific SVGs */
+body.theme-gameboy .nav-item[data-view="view-player"] {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='2' width='6' height='4'/><rect x='2' y='3' width='1' height='1'/><rect x='5' y='3' width='1' height='1'/><rect x='3' y='4' width='2' height='1'/></svg>") !important;
+  background-size: 24px 24px !important;
+}
+body.theme-gameboy .nav-item[data-view="view-library"] {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='4' y='1' width='3' height='1'/><rect x='6' y='2' width='1' height='3'/><rect x='4' y='5' width='2' height='1'/><rect x='3' y='4' width='2' height='1'/></svg>") !important;
+  background-size: 24px 24px !important;
+}
+body.theme-gameboy .nav-item[data-view="view-playlists"] {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='2' width='2' height='1'/><rect x='1' y='3' width='6' height='4'/><rect x='4' y='2' width='3' height='1'/></svg>") !important;
+  background-size: 24px 24px !important;
+}
+body.theme-gameboy .nav-item[data-view="view-favorites"] {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' fill='%230f380f'><rect x='1' y='2' width='6' height='3'/><rect x='2' y='1' width='1' height='1'/><rect x='5' y='1' width='1' height='1'/><rect x='2' y='5' width='4' height='1'/><rect x='3' y='6' width='2' height='1'/><rect x='4' y='7' width='1' height='1'/></svg>") !important;
+  background-size: 24px 24px !important;
+}
+
+/* Make room for SVGs in nav item */
+body.theme-gameboy .nav-item span {
+  margin-top: 26px !important;
 }
 
 /* Thick Retro borders */
@@ -971,20 +1070,24 @@ body.theme-gameboy .btn-primary:active {
   color: #8bac0f !important;
 }
 
-/* Adjust font sizes in Game Boy theme to prevent text overflows */
+/* Adjust font sizes in Game Boy theme to prevent text overflows and increase legibility */
 body.theme-gameboy h1,
 body.theme-gameboy h2,
 body.theme-gameboy h3 {
-  font-size: 11px !important;
+  font-size: 13px !important;
   line-height: 1.4;
-  letter-spacing: -0.5px;
+  letter-spacing: 0px !important;
 }
 
 body.theme-gameboy p,
 body.theme-gameboy span,
-body.theme-gameboy div {
-  font-size: 7px !important;
-  letter-spacing: -0.5px;
+body.theme-gameboy div,
+body.theme-gameboy li,
+body.theme-gameboy button,
+body.theme-gameboy input {
+  font-size: 9px !important;
+  line-height: 1.5;
+  letter-spacing: 0px !important;
 }
 
 /* Background Glowing Orbs Disabled */
@@ -1118,7 +1221,7 @@ body.theme-gameboy .track-item.playing * {
   color: #9bbc0f !important;
 }
 
-/* Favorite buttons */
+/* Favorite buttons active states color override */
 body.theme-gameboy .action-fav.active,
 body.theme-gameboy #ctrl-favorite.active {
   color: #0f380f !important;
