@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '3.0'; // Vercel independent domain release
+const APP_VERSION = '3.1'; // Vercel independent domain release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
