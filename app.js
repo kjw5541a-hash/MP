@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '2.4'; // Increment to force automatic updates on user devices
+const APP_VERSION = '2.5'; // Increment to force automatic updates on user devices
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -417,11 +417,16 @@ function playTrack(track, trackList, index) {
   // Revoke old blob URL to free memory
   if (state.audioObjectUrl) {
     URL.revokeObjectURL(state.audioObjectUrl);
+    state.audioObjectUrl = null;
   }
 
-  // Create new Blob URL and set source
-  state.audioObjectUrl = URL.createObjectURL(track.audioBlob);
-  audio.src = state.audioObjectUrl;
+  // Set audio source (using Scoped SW URL if available, fallback to Blob URL)
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    audio.src = `./api/play?id=${track.id}`;
+  } else {
+    state.audioObjectUrl = URL.createObjectURL(track.audioBlob);
+    audio.src = state.audioObjectUrl;
+  }
   
   // Play Audio
   audio.play()

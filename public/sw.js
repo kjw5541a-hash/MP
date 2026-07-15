@@ -36,9 +36,83 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event (Cache First with Network Fallback)
+// Helper to retrieve track blob from IndexedDB
+function getTrackBlobFromDB(trackId) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('mp-player-db', 1);
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('tracks')) {
+        reject(new Error('Tracks store not found'));
+        return;
+      }
+      const transaction = db.transaction(['tracks'], 'readonly');
+      const store = transaction.objectStore('tracks');
+      const getReq = store.get(Number(trackId));
+      getReq.onsuccess = () => {
+        if (getReq.result) {
+          resolve(getReq.result.audioBlob);
+        } else {
+          reject(new Error('Track not found'));
+        }
+      };
+      getReq.onerror = () => reject(getReq.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Fetch Event (Cache First with Range Request/IndexedDB Streaming for audio)
 self.addEventListener('fetch', (event) => {
-  // Only cache GET requests (IndexedDB handles audio blobs, not cache)
+  // 1. Intercept media stream requests to solve iOS PWA blob scope matching redirect bugs
+  if (event.request.url.includes('/api/play?id=')) {
+    const url = new URL(event.request.url);
+    const trackId = url.searchParams.get('id');
+
+    event.respondWith(
+      getTrackBlobFromDB(trackId)
+        .then((blob) => {
+          const rangeHeader = event.request.headers.get('Range');
+          
+          if (rangeHeader) {
+            // Parse Range header (e.g., "bytes=0-1000000" or "bytes=0-")
+            const parts = rangeHeader.replace(/bytes=/, "").split("-");
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : blob.size - 1;
+            
+            // Slice the blob to return only the requested chunk
+            const chunk = blob.slice(start, end + 1);
+            
+            return new Response(chunk, {
+              status: 206,
+              statusText: 'Partial Content',
+              headers: {
+                'Content-Type': blob.type || 'audio/m4a',
+                'Content-Range': `bytes ${start}-${end}/${blob.size}`,
+                'Content-Length': chunk.size.toString(),
+                'Accept-Ranges': 'bytes'
+              }
+            });
+          } else {
+            // Full media file request
+            return new Response(blob, {
+              headers: {
+                'Content-Type': blob.type || 'audio/m4a',
+                'Content-Length': blob.size.toString(),
+                'Accept-Ranges': 'bytes'
+              }
+            });
+          }
+        })
+        .catch((err) => {
+          console.error('Service Worker: API media stream failed:', err);
+          return new Response('Media not found: ' + err.message, { status: 404 });
+        })
+    );
+    return;
+  }
+
+  // 2. Default Cache-first logic for static assets
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
@@ -47,13 +121,11 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
 
-      // Fetch from network and put it in cache for next time
       return fetch(event.request).then((networkResponse) => {
         if (!networkResponse || networkResponse.status !== 200) {
           return networkResponse;
         }
 
-        // Clone response to put in cache
         const responseToCache = networkResponse.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache);
@@ -61,7 +133,6 @@ self.addEventListener('fetch', (event) => {
 
         return networkResponse;
       }).catch(() => {
-        // Offline fallback if not in cache (e.g. basic network failure)
         console.log('Service Worker: Fetch failed, offline.');
       });
     })
