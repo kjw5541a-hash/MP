@@ -6,11 +6,11 @@
   <title>MP - Music Player</title>
   
   <!-- PWA Manifest & Theme -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="./manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MP">
-  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
   <meta name="theme-color" content="#0d0e15">
 
   <!-- Google Fonts & FontAwesome Icons -->
@@ -77,15 +77,6 @@
             <div class="time-label" id="time-total">0:00</div>
           </div>
 
-          <!-- Volume Slider Bar (Same format as Seek Bar) -->
-          <div class="timeline-container volume-timeline-container">
-            <button id="ctrl-mute" class="btn-icon" title="음소거" style="font-size: 11px; width: 40px; display: flex; justify-content: center; align-items: center;"><i class="fa-solid fa-volume-high"></i></button>
-            <div class="slider-wrapper">
-              <input type="range" id="volume-slider" min="0" max="100" value="80" class="custom-slider volume-slider">
-              <div class="slider-progress" id="volume-progress"></div>
-            </div>
-            <div class="time-label" id="volume-percent" style="font-size: 10px; width: 40px; text-align: center;">80%</div>
-          </div>
 
           <!-- Controls Layout -->
           <div class="player-controls">

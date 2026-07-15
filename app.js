@@ -43,11 +43,6 @@ const btnNext = document.getElementById('ctrl-next');
 const btnShuffle = document.getElementById('ctrl-shuffle');
 const btnRepeat = document.getElementById('ctrl-repeat');
 const btnFavorite = document.getElementById('ctrl-favorite');
-const btnMute = document.getElementById('ctrl-mute');
-const volumeSlider = document.getElementById('volume-slider');
-const volumeProgress = document.getElementById('volume-progress');
-const volumePercent = document.getElementById('volume-percent');
-
 // Views Lists Containers
 const libraryList = document.getElementById('library-list');
 const libraryEmpty = document.getElementById('library-empty');
@@ -76,7 +71,7 @@ const importProgressText = document.getElementById('import-progress-text');
 // --- PWA SERVICE WORKER REGISTRATION ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('./sw.js')
       .then(reg => console.log('Service Worker registered successfully!', reg.scope))
       .catch(err => console.log('Service Worker registration failed:', err));
   });
@@ -509,6 +504,9 @@ async function importFiles(files) {
     return;
   }
 
+  // Fetch existing tracks once to check for duplicates
+  const existingTracks = await db.getAllTracks();
+
   // Show loading indicator
   importLoadingModal.classList.add('active');
   importLoadingText.textContent = '음원 가져오는 중...';
@@ -518,9 +516,6 @@ async function importFiles(files) {
 
   for (const file of audioFiles) {
     try {
-      // Get Duration
-      const duration = await getAudioDuration(file);
-      
       // Parse Title & Artist from filename (e.g., "SongTitle - Artist.m4a" or just "Filename.m4a")
       const filenameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
       let title = filenameWithoutExt;
@@ -538,6 +533,22 @@ async function importFiles(files) {
           artist = filenameWithoutExt.substring(hyphenIndex + 1).trim();
         }
       }
+
+      // Check for duplicates (case-insensitive title and artist match)
+      const isDuplicate = existingTracks.some(t => 
+        t.title.toLowerCase() === title.toLowerCase() && 
+        t.artist.toLowerCase() === artist.toLowerCase()
+      );
+
+      if (isDuplicate) {
+        console.log(`Skipping duplicate track: ${title} - ${artist}`);
+        processedCount++;
+        importProgressText.textContent = `${processedCount} / ${audioFiles.length} 파일 완료`;
+        continue;
+      }
+
+      // Get Duration
+      const duration = await getAudioDuration(file);
 
       // Add to IndexedDB
       await db.addTrack({
@@ -796,33 +807,6 @@ function setupEventListeners() {
     await db.toggleFavorite(currentTrack.id, !isFav);
     await renderAllViews();
     updatePlayerFavoriteButton();
-  });
-
-  // Mute & Volume
-  btnMute.addEventListener('click', () => {
-    audio.muted = !audio.muted;
-    if (audio.muted) {
-      btnMute.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-      volumeProgress.style.width = '0%';
-      volumeSlider.value = 0;
-      if (volumePercent) volumePercent.textContent = '0%';
-    } else {
-      btnMute.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-      const volumePercentVal = state.volume * 100;
-      volumeProgress.style.width = `${volumePercentVal}%`;
-      volumeSlider.value = volumePercentVal;
-      if (volumePercent) volumePercent.textContent = `${Math.round(volumePercentVal)}%`;
-    }
-  });
-
-  volumeSlider.addEventListener('input', (e) => {
-    const vol = e.target.value / 100;
-    audio.volume = vol;
-    state.volume = vol;
-    audio.muted = false;
-    btnMute.innerHTML = vol === 0 ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
-    volumeProgress.style.width = `${e.target.value}%`;
-    if (volumePercent) volumePercent.textContent = `${e.target.value}%`;
   });
 
   // Playlists Subview Back Button
