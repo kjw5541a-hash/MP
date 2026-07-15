@@ -14,8 +14,8 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "/MP/index.html",
-  "scope": "/MP/",
+  "start_url": "/",
+  "scope": "/",
   "background_color": "#0d0e15",
   "theme_color": "#181a26",
   "display": "standalone",

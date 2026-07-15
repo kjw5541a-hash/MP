@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '2.8'; // Increment to force automatic updates on user devices
+const APP_VERSION = '3.0'; // Vercel independent domain release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -105,28 +105,11 @@ const importLoadingModal = document.getElementById('import-loading-modal');
 const importLoadingText = document.getElementById('import-loading-text');
 const importProgressText = document.getElementById('import-progress-text');
 
-// --- PWA SERVICE WORKER REGISTRATION & CLEANUP ---
+// --- PWA SERVICE WORKER REGISTRATION ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Clean up any accidental root-level service workers
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      for (const registration of registrations) {
-        if (registration.scope === window.location.origin + '/' || registration.scope.endsWith('.github.io/')) {
-          console.log('Unregistering polluting root-level service worker:', registration.scope);
-          registration.unregister();
-        }
-      }
-    });
-
-    // Register folder-scoped service worker with cache-busting query parameter
-    navigator.serviceWorker.register(`./sw.js?v=${APP_VERSION}`)
-      .then(reg => {
-        console.log('Service Worker registered successfully!', reg.scope);
-        // If SW is installed but not yet controlling, reload once
-        if (reg.active && !navigator.serviceWorker.controller) {
-          window.location.reload();
-        }
-      })
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker registered:', reg.scope))
       .catch(err => console.log('Service Worker registration failed:', err));
   });
 }
@@ -427,8 +410,9 @@ function playTrack(track, trackList, index) {
     state.audioObjectUrl = null;
   }
 
-  // Always use the folder-scoped API URL to guarantee iOS Lock Screen routes back to /MP/ PWA!
-  audio.src = `./api/play?id=${track.id}`;
+  // Create blob URL for audio playback (simple, reliable, no SW dependency)
+  state.audioObjectUrl = URL.createObjectURL(track.audioBlob);
+  audio.src = state.audioObjectUrl;
   state.hasLoadedTrack = true;
   
   // Play Audio
