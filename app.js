@@ -1,6 +1,42 @@
-// app.js - Main Application Logic & Audio Engine for MP
-
 import * as db from './db.js';
+
+// --- VERSION CONTROL & CACHE BUSTING ---
+const APP_VERSION = '2.4'; // Increment to force automatic updates on user devices
+
+(async function checkAppVersion() {
+  const savedVersion = localStorage.getItem('mp-app-version');
+  if (savedVersion !== APP_VERSION) {
+    console.log(`New version detected (${APP_VERSION}). Clearing cache...`);
+    
+    // 1. Unregister all service workers
+    if ('serviceWorker' in navigator) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          await reg.unregister();
+        }
+      } catch (e) {
+        console.error('Service Worker unregistration failed:', e);
+      }
+    }
+    
+    // 2. Clear all cache storage
+    if ('caches' in window) {
+      try {
+        const cacheNames = await caches.keys();
+        for (const name of cacheNames) {
+          await caches.delete(name);
+        }
+      } catch (e) {
+        console.error('Cache clearing failed:', e);
+      }
+    }
+    
+    // 3. Save new version and force reload
+    localStorage.setItem('mp-app-version', APP_VERSION);
+    window.location.reload(true);
+  }
+})();
 
 // --- STATE MANAGEMENT ---
 let state = {
@@ -81,8 +117,8 @@ if ('serviceWorker' in navigator) {
       }
     });
 
-    // Register folder-scoped service worker
-    navigator.serviceWorker.register('./sw.js')
+    // Register folder-scoped service worker with cache-busting query parameter
+    navigator.serviceWorker.register(`./sw.js?v=${APP_VERSION}`)
       .then(reg => console.log('Service Worker registered successfully!', reg.scope))
       .catch(err => console.log('Service Worker registration failed:', err));
   });
