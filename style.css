@@ -1060,3 +1060,42 @@ body.theme-glass .track-item.playing .track-title {
   transform: translateY(-2px);
 }
 
+/* Settings card compact layout overrides */
+.settings-card {
+  max-width: 330px !important;
+}
+.settings-card .modal-header {
+  padding: 14px 18px !important;
+}
+.settings-card .modal-body {
+  padding: 0 18px 18px 18px !important;
+}
+.settings-card .form-group {
+  margin-bottom: 12px !important;
+}
+.settings-card label {
+  display: block !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 5px !important;
+  color: var(--text-main) !important;
+}
+.settings-card input {
+  width: 100% !important;
+  padding: 8px 12px !important;
+  height: 38px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-color) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-main) !important;
+  font-size: 0.85rem !important;
+  outline: none !important;
+}
+.settings-card small {
+  display: block !important;
+  font-size: 0.65rem !important;
+  color: var(--text-muted) !important;
+  margin-top: 4px !important;
+  line-height: 1.3 !important;
+}
+

@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '3.1'; // Vercel independent domain release
+const APP_VERSION = '3.2'; // Vercel independent domain release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -1018,31 +1018,61 @@ function escapeHtml(string) {
 }
 
 // --- YOUTUBE SEARCH & DOWNLOAD INTEGRATION ---
+const PIPED_INSTANCES = [
+  'https://api.piped.yt',
+  'https://pipedapi.kavin.rocks',
+  'https://pipedapi.colby.land',
+  'https://pipedapi.tokhmi.xyz',
+  'https://piped-api.lunar.icu'
+];
+
 async function searchYouTubeVideos(query) {
   if (!query.trim()) return;
   youtubeSearchStatus.style.display = 'block';
   youtubeSearchStatus.textContent = '유튜브에서 검색 중...';
   youtubeResultsList.innerHTML = '';
   
-  try {
-    const response = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=videos`);
-    if (!response.ok) throw new Error('API response error');
-    
-    const data = await response.json();
-    const items = data.items || [];
-    
-    youtubeSearchStatus.style.display = 'none';
-    
-    if (items.length === 0) {
-      youtubeResultsList.innerHTML = '<li style="text-align:center; padding:20px; opacity:0.6;">검색 결과가 없습니다.</li>';
-      return;
+  let success = false;
+  let items = [];
+  
+  for (const instance of PIPED_INSTANCES) {
+    try {
+      console.log(`Trying search on: ${instance}`);
+      const response = await fetch(`${instance}/search?q=${encodeURIComponent(query)}&filter=videos`);
+      if (response.ok) {
+        const data = await response.json();
+        items = data.items || [];
+        success = true;
+        break;
+      }
+    } catch (e) {
+      console.warn(`Failed to fetch from ${instance}:`, e);
     }
-    
-    renderYouTubeSearchResults(items);
-  } catch (error) {
-    console.error('YouTube search error:', error);
-    youtubeSearchStatus.textContent = '검색 실패. Piped API 인스턴스 제한이 걸렸을 수 있으니 다시 시도해 주세요.';
   }
+  
+  youtubeSearchStatus.style.display = 'none';
+  
+  if (!success) {
+    youtubeResultsList.innerHTML = `
+      <li style="text-align:center; padding:30px 20px; opacity:0.8; list-style:none;">
+        <div style="font-size: 0.9rem; color: var(--danger-color); margin-bottom: 12px; font-weight:700;">유튜브 검색 서버 연결 실패</div>
+        <div style="font-size: 0.8rem; opacity: 0.7; line-height: 1.5; margin-bottom: 16px;">
+          일시적으로 모든 검색 대역폭 제한에 도달했습니다.<br>사파리에서 직접 검색 후 유튜브 주소를 복사하거나 아래 버튼을 이용해 주세요.
+        </div>
+        <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(query)}" target="_blank" class="btn btn-secondary" style="border-radius: 8px; font-size: 0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px; background: rgba(255, 255, 255, 0.08); padding: 8px 16px; border: 1px solid rgba(255, 255, 255, 0.12);">
+          <i class="fa-brands fa-youtube" style="color:#ff0000; font-size: 14px;"></i> 유튜브 앱/웹에서 직접 검색하기
+        </a>
+      </li>
+    `;
+    return;
+  }
+  
+  if (items.length === 0) {
+    youtubeResultsList.innerHTML = '<li style="text-align:center; padding:20px; opacity:0.6; list-style:none;">검색 결과가 없습니다.</li>';
+    return;
+  }
+  
+  renderYouTubeSearchResults(items);
 }
 
 function renderYouTubeSearchResults(items) {
