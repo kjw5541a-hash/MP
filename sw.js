@@ -39,7 +39,7 @@ self.addEventListener('activate', (event) => {
 // Helper to retrieve track blob from IndexedDB
 function getTrackBlobFromDB(trackId) {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('mp-player-db', 1);
+    const request = indexedDB.open('MPPlayerDB', 1);
     request.onsuccess = (event) => {
       const db = event.target.result;
       if (!db.objectStoreNames.contains('tracks')) {
