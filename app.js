@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '3.6'; // Navigation icon polish release
+const APP_VERSION = '3.7'; // iOS PWA Background Recovery Patch
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -79,6 +79,7 @@ const btnNext = document.getElementById('ctrl-next');
 const btnShuffle = document.getElementById('ctrl-shuffle');
 const btnRepeat = document.getElementById('ctrl-repeat');
 const btnFavorite = document.getElementById('ctrl-favorite');
+
 // Views Lists Containers
 const libraryList = document.getElementById('library-list');
 const libraryEmpty = document.getElementById('library-empty');
@@ -104,7 +105,7 @@ const importLoadingModal = document.getElementById('import-loading-modal');
 const importLoadingText = document.getElementById('import-loading-text');
 const importProgressText = document.getElementById('import-progress-text');
 
-// New DOM Elements for settings, search, and similar tabs
+// Settings DOM Elements
 const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const settingsCloseBtn = document.getElementById('settings-close-btn');
@@ -150,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load initial data
     await renderAllViews();
     
-    // Load last playing track state from DB if available (optional)
+    // Load last playing track state from DB if available
     const tracks = await db.getAllTracks();
     if (tracks.length > 0) {
       loadTrackMetadata(tracks[0]);
@@ -212,9 +213,7 @@ async function renderLibrary(searchFilter = '') {
       </div>
     `;
 
-    // Click to play track
     li.addEventListener('click', (e) => {
-      // Prevent play if clicking on actions
       if (e.target.closest('.track-item-actions')) return;
       playTrack(track, filtered, filtered.indexOf(track));
     });
@@ -249,7 +248,6 @@ async function renderLibrary(searchFilter = '') {
         const trackId = parseInt(btn.dataset.id);
         await db.deleteTrack(trackId);
         await renderAllViews();
-        // If deleted track was playing, stop it
         if (state.currentTrackList[state.currentIndex]?.id === trackId) {
           audio.pause();
           state.isPlaying = false;
@@ -348,7 +346,7 @@ async function openPlaylistDetail(playlist) {
   const allTracks = await db.getAllTracks();
   const playlistTracks = playlist.trackIds
     .map(id => allTracks.find(t => t.id === id))
-    .filter(Boolean); // Filter out any undefined elements
+    .filter(Boolean);
 
   if (playlistTracks.length === 0) {
     playlistDetailList.innerHTML = `
@@ -392,7 +390,6 @@ async function openPlaylistDetail(playlist) {
       const trackId = parseInt(btn.dataset.id);
       await db.removeTrackFromPlaylist(playlist.id, trackId);
       
-      // Reload playlist state
       const playlists = await db.getAllPlaylists();
       const updatedPlaylist = playlists.find(p => p.id === playlist.id);
       if (updatedPlaylist) {
@@ -413,7 +410,6 @@ function loadTrackMetadata(track) {
   seekProgress.style.width = '0%';
   updatePlayerFavoriteButton();
 
-  // Update Similar Tab Currently Playing song info
   const similarCurrentTitle = document.getElementById('similar-current-title');
   const similarCurrentArtist = document.getElementById('similar-current-artist');
   if (similarCurrentTitle && similarCurrentArtist) {
@@ -428,18 +424,15 @@ function playTrack(track, trackList, index) {
   
   loadTrackMetadata(track);
   
-  // Revoke old blob URL to free memory if any exists
   if (state.audioObjectUrl) {
     URL.revokeObjectURL(state.audioObjectUrl);
     state.audioObjectUrl = null;
   }
 
-  // Create blob URL for audio playback (simple, reliable, no SW dependency)
   state.audioObjectUrl = URL.createObjectURL(track.audioBlob);
   audio.src = state.audioObjectUrl;
   state.hasLoadedTrack = true;
   
-  // Play Audio
   audio.play()
     .then(() => {
       state.isPlaying = true;
@@ -455,6 +448,37 @@ function playTrack(track, trackList, index) {
     });
 }
 
+// [★핵심 iOS PWA 복원 처리 로직]
+async function restoreAudioPlayback() {
+  if (state.currentIndex >= 0 && state.currentTrackList[state.currentIndex]) {
+    // iOS WebKit 환경에서 락스크린 탈출 및 다이내믹 아일랜드 복귀 시 Blob URL 유실 여부 검증
+    if (!audio.src || audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE || (state.isPlaying && audio.paused)) {
+      console.log('iOS WebKit Eviction 감지: 끊어진 재생 세션을 복구합니다.');
+      
+      const currentTrack = state.currentTrackList[state.currentIndex];
+      const savedTime = audio.currentTime; // 백그라운드 전환 직전 재생 위치 캐치
+      
+      if (state.audioObjectUrl) {
+        URL.revokeObjectURL(state.audioObjectUrl);
+      }
+      
+      // Blob URL 재생성 후 오디오 엔진 재매핑
+      state.audioObjectUrl = URL.createObjectURL(currentTrack.audioBlob);
+      audio.src = state.audioObjectUrl;
+      audio.currentTime = savedTime;
+      
+      if (state.isPlaying) {
+        try {
+          await audio.play();
+          highlightPlayingItem();
+        } catch (err) {
+          console.error('오디오 복구 후 자동 재생 실패:', err);
+        }
+      }
+    }
+  }
+}
+
 function togglePlay() {
   if (state.currentTrackList.length === 0) return;
   
@@ -463,7 +487,6 @@ function togglePlay() {
     state.isPlaying = false;
     updatePlayButtonUI();
   } else {
-    // If no track has been loaded yet, start from beginning of list
     if (!state.hasLoadedTrack && state.currentTrackList.length > 0) {
       playTrack(state.currentTrackList[0], state.currentTrackList, 0);
       return;
@@ -489,7 +512,6 @@ function nextTrack() {
   } else if (nextIndex >= state.currentTrackList.length) {
     nextIndex = state.isRepeat === 'all' ? 0 : state.currentTrackList.length - 1;
     if (state.isRepeat !== 'all' && nextIndex === state.currentTrackList.length - 1 && state.currentIndex === nextIndex) {
-      // Stop playing at the end of the list if repeat is 'none'
       audio.pause();
       state.isPlaying = false;
       updatePlayButtonUI();
@@ -503,7 +525,6 @@ function nextTrack() {
 function prevTrack() {
   if (state.currentTrackList.length === 0) return;
 
-  // Restart song if played past 3 seconds
   if (audio.currentTime > 3) {
     audio.currentTime = 0;
     return;
@@ -519,23 +540,14 @@ function prevTrack() {
   playTrack(state.currentTrackList[prevIndex], state.currentTrackList, prevIndex);
 }
 
-// Highlight currently playing track across views
 function highlightPlayingItem() {
   const allItems = document.querySelectorAll('.track-item');
   allItems.forEach(item => item.classList.remove('playing'));
   
   if (state.currentIndex < 0) return;
-  const currentTrack = state.currentTrackList[state.currentIndex];
-  
-  // Highlight in Library list
-  const libItems = libraryList.querySelectorAll('.track-item');
-  const tracks = Array.from(libItems);
-  
-  // Note: Simple lookup since they match indices
-  renderAllViews(); // Re-render updates class list natively
+  renderAllViews();
 }
 
-// Update Favorite Heart Icon on Player
 function updatePlayerFavoriteButton() {
   if (state.currentIndex < 0) return;
   const currentTrack = state.currentTrackList[state.currentIndex];
@@ -574,10 +586,8 @@ async function importFiles(files) {
     return;
   }
 
-  // Fetch existing tracks once to check for duplicates
   const existingTracks = await db.getAllTracks();
 
-  // Show loading indicator
   importLoadingModal.classList.add('active');
   importLoadingText.textContent = '음원 가져오는 중...';
   importProgressText.textContent = `0 / ${audioFiles.length} 파일 완료`;
@@ -586,12 +596,10 @@ async function importFiles(files) {
 
   for (const file of audioFiles) {
     try {
-      // Parse Title & Artist from filename (e.g., "SongTitle - Artist.m4a" or just "Filename.m4a")
       const filenameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
       let title = filenameWithoutExt;
       let artist = 'Unknown Artist';
 
-      // Splitting by standard delimiters
       const delimiterIndex = filenameWithoutExt.indexOf(' - ');
       if (delimiterIndex > -1) {
         title = filenameWithoutExt.substring(0, delimiterIndex).trim();
@@ -604,23 +612,19 @@ async function importFiles(files) {
         }
       }
 
-      // Check for duplicates (case-insensitive title and artist match)
       const isDuplicate = existingTracks.some(t => 
         t.title.toLowerCase() === title.toLowerCase() && 
         t.artist.toLowerCase() === artist.toLowerCase()
       );
 
       if (isDuplicate) {
-        console.log(`Skipping duplicate track: ${title} - ${artist}`);
         processedCount++;
         importProgressText.textContent = `${processedCount} / ${audioFiles.length} 파일 완료`;
         continue;
       }
 
-      // Get Duration
       const duration = await getAudioDuration(file);
 
-      // Add to IndexedDB
       await db.addTrack({
         title,
         artist,
@@ -636,12 +640,10 @@ async function importFiles(files) {
     importProgressText.textContent = `${processedCount} / ${audioFiles.length} 파일 완료`;
   }
 
-  // Dismiss modal
   setTimeout(async () => {
     importLoadingModal.classList.remove('active');
     await renderAllViews();
     
-    // Auto load first song if list was empty
     const tracks = await db.getAllTracks();
     if (tracks.length > 0 && state.currentIndex === -1) {
       loadTrackMetadata(tracks[0]);
@@ -649,8 +651,6 @@ async function importFiles(files) {
     }
   }, 500);
 }
-
-
 
 async function handleFolderImport(e) {
   const files = Array.from(e.target.files);
@@ -673,7 +673,6 @@ function updateThemeToggleIcon(isGlass) {
   }
 }
 
-// Helper to determine audio duration in browser
 function getAudioDuration(file) {
   return new Promise((resolve) => {
     const tempAudio = new Audio();
@@ -687,13 +686,13 @@ function getAudioDuration(file) {
     });
 
     tempAudio.addEventListener('error', () => {
-      resolve(0); // Fallback to 0 if cannot decode duration
+      resolve(0);
       URL.revokeObjectURL(objectUrl);
     });
   });
 }
 
-// --- MEDIA SESSION API (CRITICAL FOR BACKGROUND AUDIO & LOCK SCREEN) ---
+// --- MEDIA SESSION API ---
 function setupMediaSession() {
   if ('mediaSession' in navigator) {
     navigator.mediaSession.setActionHandler('play', () => {
@@ -754,18 +753,15 @@ function updateMediaSessionPositionState() {
 
 // --- LISTENERS SETUP ---
 function setupAudioListeners() {
-  // Audio Playback Updates
   audio.addEventListener('timeupdate', () => {
     if (!audio.duration) return;
     const progressPercent = (audio.currentTime / audio.duration) * 100;
     
-    // Update seek slider and progress styling
     seekSlider.value = progressPercent;
     seekProgress.style.width = `${progressPercent}%`;
     timeCurrent.textContent = formatTime(audio.currentTime);
   });
 
-  // Track Ends (Auto-play logic)
   audio.addEventListener('ended', () => {
     if (state.isRepeat === 'one') {
       audio.currentTime = 0;
@@ -775,7 +771,6 @@ function setupAudioListeners() {
     }
   });
 
-  // Metadata Loaded (Duration sync)
   audio.addEventListener('loadedmetadata', () => {
     timeTotal.textContent = formatTime(audio.duration);
     updateMediaSessionPositionState();
@@ -783,22 +778,27 @@ function setupAudioListeners() {
 }
 
 function setupEventListeners() {
-  // Folder Import Trigger
   folderInput.addEventListener('change', handleFolderImport);
-  
-  // Theme Toggle Trigger
   btnThemeToggle.addEventListener('click', toggleTheme);
 
-  // Tab View Routing
+  // 라이프사이클 복원 핸들러 바인딩 (iOS 백그라운드 생명주기 대응)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      restoreAudioPlayback();
+    }
+  });
+
+  window.addEventListener('pageshow', () => {
+    restoreAudioPlayback();
+  });
+
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const targetView = item.dataset.view;
       
-      // Update Tab CSS
       navItems.forEach(n => n.classList.remove('active'));
       item.classList.add('active');
 
-      // Update View CSS
       viewElements.forEach(view => {
         if (view.id === targetView) {
           view.classList.add('active');
@@ -809,24 +809,20 @@ function setupEventListeners() {
 
       state.activeView = targetView;
       
-      // Close playlist subview if clicking away
       if (targetView !== 'view-playlists') {
         playlistDetailSubview.classList.remove('active');
       }
     });
   });
 
-  // Search input in Library
   librarySearch.addEventListener('input', (e) => {
     renderLibrary(e.target.value);
   });
 
-  // Audio Playback Controls
   btnPlay.addEventListener('click', togglePlay);
   btnNext.addEventListener('click', nextTrack);
   btnPrev.addEventListener('click', prevTrack);
 
-  // Seek Slider
   seekSlider.addEventListener('input', (e) => {
     if (!audio.duration) return;
     const seekTime = (e.target.value / 100) * audio.duration;
@@ -840,13 +836,11 @@ function setupEventListeners() {
     updateMediaSessionPositionState();
   });
 
-  // Shuffle Toggle
   btnShuffle.addEventListener('click', () => {
     state.isShuffle = !state.isShuffle;
     btnShuffle.classList.toggle('active', state.isShuffle);
   });
 
-  // Repeat Toggle ('none' -> 'all' -> 'one' -> 'none')
   btnRepeat.addEventListener('click', () => {
     if (state.isRepeat === 'none') {
       state.isRepeat = 'all';
@@ -855,7 +849,7 @@ function setupEventListeners() {
     } else if (state.isRepeat === 'all') {
       state.isRepeat = 'one';
       btnRepeat.classList.add('active');
-      btnRepeat.innerHTML = '<i class="fa-solid fa-rotate-left"></i>'; // One track repeat icon
+      btnRepeat.innerHTML = '<i class="fa-solid fa-rotate-left"></i>';
     } else {
       state.isRepeat = 'none';
       btnRepeat.classList.remove('active');
@@ -863,7 +857,6 @@ function setupEventListeners() {
     }
   });
 
-  // Favorite Toggle on Player
   btnFavorite.addEventListener('click', async () => {
     if (state.currentIndex < 0) return;
     const currentTrack = state.currentTrackList[state.currentIndex];
@@ -872,20 +865,17 @@ function setupEventListeners() {
     const isFav = btnFavorite.classList.contains('active');
     await db.toggleFavorite(currentTrack.id, !isFav);
     
-    // Update the in-memory track object to prevent display delays/state mismatches
     currentTrack.isFavorite = !isFav;
     
     await renderAllViews();
     updatePlayerFavoriteButton();
   });
 
-  // Playlists Subview Back Button
   btnPlaylistBack.addEventListener('click', () => {
     playlistDetailSubview.classList.remove('active');
     state.currentPlaylistId = null;
   });
 
-  // Create Playlist Button Dialog
   btnCreatePlaylist.addEventListener('click', async () => {
     const name = prompt('새 플레이리스트의 이름을 입력하세요:');
     if (name && name.trim()) {
@@ -894,7 +884,6 @@ function setupEventListeners() {
     }
   });
 
-  // Delete Playlist Button
   btnDeletePlaylistAction.addEventListener('click', async () => {
     if (!state.currentPlaylistId) return;
     if (confirm('이 플레이리스트를 삭제하시겠습니까? 플레이리스트 안의 곡들은 보관함에 안전하게 유지됩니다.')) {
@@ -905,7 +894,6 @@ function setupEventListeners() {
     }
   });
 
-  // Modal close trigger
   modalCloseBtn.addEventListener('click', closeAddToPlaylistModal);
   window.addEventListener('click', (e) => {
     if (e.target === addToPlaylistModal) {
@@ -916,7 +904,6 @@ function setupEventListeners() {
     }
   });
 
-  // Settings modal triggers
   settingsBtn.addEventListener('click', () => {
     settingsGeminiKey.value = localStorage.getItem('mp-gemini-key') || '';
     settingsShortcutName.value = localStorage.getItem('mp-shortcut-name') || '유튜브 음원 다운로드';
@@ -934,7 +921,6 @@ function setupEventListeners() {
     alert('설정이 저장되었습니다.');
   });
 
-  // YouTube search triggers
   youtubeSearchBtn.addEventListener('click', () => {
     searchYouTubeVideos(youtubeSearchInput.value);
   });
@@ -945,7 +931,6 @@ function setupEventListeners() {
     }
   });
 
-  // Similar song recommender trigger
   btnGetSimilar.addEventListener('click', () => {
     const title = document.getElementById('similar-current-title').textContent;
     const artist = document.getElementById('similar-current-artist').textContent;
@@ -1196,7 +1181,6 @@ async function getSimilarSongs(title, artist) {
   }
   
   try {
-    // 응답 구조 안전 검증
     if (!resData.candidates || !resData.candidates[0]?.content?.parts?.[0]?.text) {
       console.error('[Gemini] Unexpected response structure:', resData);
       similarStatus.innerHTML = `<span style="color:var(--danger-color);">응답 구조 오류</span><br><small style="opacity:0.7;">${escapeHtml(JSON.stringify(resData).substring(0, 200))}</small>`;
@@ -1204,8 +1188,6 @@ async function getSimilarSongs(title, artist) {
     }
     
     const responseText = resData.candidates[0].content.parts[0].text;
-    
-    // JSON 파싱 — 마크다운 코드블록 감싸기 제거
     const jsonStr = responseText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsedData = JSON.parse(jsonStr);
     const recommendations = parsedData.recommendations || [];
@@ -1251,13 +1233,11 @@ function renderSimilarSongs(songs) {
     li.querySelector('.btn-search-recommend').addEventListener('click', (e) => {
       const searchQuery = e.currentTarget.dataset.query;
       
-      // Navigate to search view
       const searchTabButton = document.querySelector('.nav-item[data-view="view-search"]');
       if (searchTabButton) {
         searchTabButton.click();
       }
       
-      // Auto fill and search
       youtubeSearchInput.value = searchQuery;
       searchYouTubeVideos(searchQuery);
     });
