@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '3.5'; // Multi-model Gemini fallback release
+const APP_VERSION = '3.6'; // Navigation icon polish release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
