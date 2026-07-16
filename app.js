@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '3.7'; // iOS PWA Background Recovery Patch
+const APP_VERSION = '3.8'; // iOS Lock Screen Sync Patch
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -433,11 +433,16 @@ function playTrack(track, trackList, index) {
   audio.src = state.audioObjectUrl;
   state.hasLoadedTrack = true;
   
+  // Update lock screen metadata synchronously to prevent background promise throttling on iOS
+  updateMediaSessionMetadata(track);
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = 'playing';
+  }
+  
   audio.play()
     .then(() => {
       state.isPlaying = true;
       updatePlayButtonUI();
-      updateMediaSessionMetadata(track);
       updateMediaSessionPositionState();
       highlightPlayingItem();
     })
@@ -445,6 +450,9 @@ function playTrack(track, trackList, index) {
       console.error('Audio playback failed:', err);
       state.isPlaying = false;
       updatePlayButtonUI();
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'none';
+      }
     });
 }
 
@@ -486,6 +494,9 @@ function togglePlay() {
     audio.pause();
     state.isPlaying = false;
     updatePlayButtonUI();
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = 'paused';
+    }
   } else {
     if (!state.hasLoadedTrack && state.currentTrackList.length > 0) {
       playTrack(state.currentTrackList[0], state.currentTrackList, 0);
@@ -494,10 +505,16 @@ function togglePlay() {
     audio.play().then(() => {
       state.isPlaying = true;
       updatePlayButtonUI();
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
     }).catch(err => {
       console.error('togglePlay error:', err);
       state.isPlaying = false;
       updatePlayButtonUI();
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'none';
+      }
     });
   }
 }
@@ -699,6 +716,9 @@ function setupMediaSession() {
       audio.play().then(() => {
         state.isPlaying = true;
         updatePlayButtonUI();
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.playbackState = 'playing';
+        }
       });
     });
 
@@ -706,6 +726,9 @@ function setupMediaSession() {
       audio.pause();
       state.isPlaying = false;
       updatePlayButtonUI();
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
     });
 
     navigator.mediaSession.setActionHandler('previoustrack', () => {
