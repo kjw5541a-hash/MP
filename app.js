@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '3.4'; // Gemini debug diagnostics + model fix
+const APP_VERSION = '3.5'; // Multi-model Gemini fallback release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -1138,38 +1138,64 @@ async function getSimilarSongs(title, artist) {
   similarStatus.textContent = 'Gemini AI가 유사한 음악을 분석 중...';
   similarResultsList.innerHTML = '';
   
-  try {
-    const prompt = `현재 재생중인 곡: "${title}" by "${artist}". 이 곡과 분위기, 장르, 템포가 비슷한 노래 5곡을 추천해줘. 반드시 아래 JSON 형식으로만 응답해. 다른 텍스트 없이 JSON만 출력해.
+  const prompt = `현재 재생중인 곡: "${title}" by "${artist}". 이 곡과 분위기, 장르, 템포가 비슷한 노래 5곡을 추천해줘. 반드시 아래 JSON 형식으로만 응답해. 다른 텍스트 없이 JSON만 출력해.
 {"recommendations": [{"title": "노래 제목", "artist": "아티스트", "reason": "추천 이유 한 줄"}]}`;
-    
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-    console.log('[Gemini] Requesting:', url.replace(apiKey, 'KEY_HIDDEN'));
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
-    });
-    
-    // --- 디버그: HTTP 에러 시 상세 원인 표시 ---
-    if (!response.ok) {
-      let errorDetail = '';
-      try {
-        const errBody = await response.json();
-        errorDetail = errBody.error?.message || JSON.stringify(errBody);
-      } catch { errorDetail = await response.text(); }
+
+  const GEMINI_MODELS = [
+    'gemini-3.5-flash',
+    'gemini-2.5-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-1.5-flash'
+  ];
+  
+  let success = false;
+  let resData = null;
+  let lastErrorDetail = '';
+  let lastStatus = 0;
+  
+  for (const model of GEMINI_MODELS) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      console.log(`[Gemini] Trying model: ${model}`);
       
-      const msg = `[HTTP ${response.status}] ${errorDetail}`;
-      console.error('[Gemini] API Error:', msg);
-      similarStatus.innerHTML = `<span style="color:var(--danger-color);font-weight:600;">API 오류 (${response.status})</span><br><small style="opacity:0.7;word-break:break-all;">${escapeHtml(errorDetail.substring(0, 200))}</small>`;
-      return;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+      
+      if (response.ok) {
+        resData = await response.json();
+        success = true;
+        console.log(`[Gemini] Success with model: ${model}`, resData);
+        break;
+      } else {
+        lastStatus = response.status;
+        try {
+          const errBody = await response.json();
+          lastErrorDetail = errBody.error?.message || JSON.stringify(errBody);
+        } catch {
+          lastErrorDetail = await response.text();
+        }
+        console.warn(`[Gemini] Model ${model} failed: [HTTP ${lastStatus}] ${lastErrorDetail}`);
+      }
+    } catch (e) {
+      console.warn(`[Gemini] Fetch error for model ${model}:`, e);
+      lastErrorDetail = e.message;
     }
-    
-    const resData = await response.json();
-    console.log('[Gemini] Raw response:', resData);
-    
+  }
+  
+  if (!success) {
+    similarStatus.innerHTML = `
+      <span style="color:var(--danger-color);font-weight:600;">API 호출 실패</span><br>
+      <small style="opacity:0.7;word-break:break-all;">[HTTP ${lastStatus}] ${escapeHtml(lastErrorDetail.substring(0, 200))}</small>
+    `;
+    return;
+  }
+  
+  try {
     // 응답 구조 안전 검증
     if (!resData.candidates || !resData.candidates[0]?.content?.parts?.[0]?.text) {
       console.error('[Gemini] Unexpected response structure:', resData);
@@ -1193,8 +1219,8 @@ async function getSimilarSongs(title, artist) {
     
     renderSimilarSongs(recommendations);
   } catch (error) {
-    console.error('[Gemini] Exception:', error);
-    similarStatus.innerHTML = `<span style="color:var(--danger-color);font-weight:600;">오류 발생</span><br><small style="opacity:0.7;word-break:break-all;">${escapeHtml(error.message)}</small>`;
+    console.error('[Gemini] Exception during parsing:', error);
+    similarStatus.innerHTML = `<span style="color:var(--danger-color);font-weight:600;">데이터 처리 오류</span><br><small style="opacity:0.7;word-break:break-all;">${escapeHtml(error.message)}</small>`;
   }
 }
 
