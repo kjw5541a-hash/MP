@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '3.2'; // Vercel independent domain release
+const APP_VERSION = '3.3'; // Vercel independent domain release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -60,7 +60,6 @@ audio.volume = state.volume;
 // --- DOM ELEMENTS ---
 const viewElements = document.querySelectorAll('.content-view');
 const navItems = document.querySelectorAll('.nav-item');
-const fileInput = document.getElementById('file-import');
 const folderInput = document.getElementById('folder-import');
 const btnThemeToggle = document.getElementById('theme-toggle');
 
@@ -651,11 +650,7 @@ async function importFiles(files) {
   }, 500);
 }
 
-async function handleFileImport(e) {
-  const files = Array.from(e.target.files);
-  await importFiles(files);
-  fileInput.value = '';
-}
+
 
 async function handleFolderImport(e) {
   const files = Array.from(e.target.files);
@@ -788,8 +783,7 @@ function setupAudioListeners() {
 }
 
 function setupEventListeners() {
-  // File & Folder Import Triggers
-  fileInput.addEventListener('change', handleFileImport);
+  // Folder Import Trigger
   folderInput.addEventListener('change', handleFolderImport);
   
   // Theme Toggle Trigger
@@ -1147,7 +1141,7 @@ async function getSimilarSongs(title, artist) {
   try {
     const prompt = `현재 재생중인 곡: '${title} - ${artist}'. 이 곡과 분위기, 장르, 템포가 비슷한 노래 5곡을 추천해줘. JSON 형식으로만 응답해야 해. JSON 구조: {"recommendations": [{"title": "노래 제목", "artist": "아티스트 이름", "reason": "이 노래를 추천하는 1줄 이유"}]}`;
     
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
