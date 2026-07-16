@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '3.8'; // iOS Lock Screen Sync Patch
+const APP_VERSION = '3.9'; // iOS Lock Screen Skip Buttons Fix
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -747,6 +747,10 @@ function setupMediaSession() {
       audio.currentTime = details.seekTime;
       updateMediaSessionPositionState();
     });
+
+    // Explicitly disable skip buttons to prioritize next/prev track buttons
+    navigator.mediaSession.setActionHandler('seekforward', null);
+    navigator.mediaSession.setActionHandler('seekbackward', null);
   }
 }
 
@@ -761,6 +765,16 @@ function updateMediaSessionMetadata(track) {
         { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }
       ]
     });
+
+    // Enforce next/prev track buttons and disable skip buttons during live playback transitions
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      prevTrack();
+    });
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      nextTrack();
+    });
+    navigator.mediaSession.setActionHandler('seekforward', null);
+    navigator.mediaSession.setActionHandler('seekbackward', null);
   }
 }
 
