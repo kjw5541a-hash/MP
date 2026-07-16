@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '3.3'; // Vercel independent domain release
+const APP_VERSION = '3.4'; // Gemini debug diagnostics + model fix
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -1128,7 +1128,7 @@ async function handleDownloadVideo(videoUrl) {
 
 // --- GEMINI AI RECOMMENDATIONS ---
 async function getSimilarSongs(title, artist) {
-  const apiKey = localStorage.getItem('mp-gemini-key') || import.meta.env.VITE_GEMINI_API_KEY || '';
+  const apiKey = (localStorage.getItem('mp-gemini-key') || '').trim();
   if (!apiKey) {
     alert('Gemini API Key가 설정되지 않았습니다.\n\n상단 로고 옆의 [설정(톱니바퀴)] 아이콘을 눌러 구글 AI 스튜디오에서 발급받은 무료 API Key를 먼저 저장해 주세요.');
     return;
@@ -1139,30 +1139,49 @@ async function getSimilarSongs(title, artist) {
   similarResultsList.innerHTML = '';
   
   try {
-    const prompt = `현재 재생중인 곡: '${title} - ${artist}'. 이 곡과 분위기, 장르, 템포가 비슷한 노래 5곡을 추천해줘. JSON 형식으로만 응답해야 해. JSON 구조: {"recommendations": [{"title": "노래 제목", "artist": "아티스트 이름", "reason": "이 노래를 추천하는 1줄 이유"}]}`;
+    const prompt = `현재 재생중인 곡: "${title}" by "${artist}". 이 곡과 분위기, 장르, 템포가 비슷한 노래 5곡을 추천해줘. 반드시 아래 JSON 형식으로만 응답해. 다른 텍스트 없이 JSON만 출력해.
+{"recommendations": [{"title": "노래 제목", "artist": "아티스트", "reason": "추천 이유 한 줄"}]}`;
     
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    console.log('[Gemini] Requesting:', url.replace(apiKey, 'KEY_HIDDEN'));
+    
+    const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          responseMimeType: 'application/json'
-        }
+        contents: [{ parts: [{ text: prompt }] }]
       })
     });
     
-    if (!response.ok) throw new Error('Gemini API request failed');
+    // --- 디버그: HTTP 에러 시 상세 원인 표시 ---
+    if (!response.ok) {
+      let errorDetail = '';
+      try {
+        const errBody = await response.json();
+        errorDetail = errBody.error?.message || JSON.stringify(errBody);
+      } catch { errorDetail = await response.text(); }
+      
+      const msg = `[HTTP ${response.status}] ${errorDetail}`;
+      console.error('[Gemini] API Error:', msg);
+      similarStatus.innerHTML = `<span style="color:var(--danger-color);font-weight:600;">API 오류 (${response.status})</span><br><small style="opacity:0.7;word-break:break-all;">${escapeHtml(errorDetail.substring(0, 200))}</small>`;
+      return;
+    }
     
     const resData = await response.json();
+    console.log('[Gemini] Raw response:', resData);
+    
+    // 응답 구조 안전 검증
+    if (!resData.candidates || !resData.candidates[0]?.content?.parts?.[0]?.text) {
+      console.error('[Gemini] Unexpected response structure:', resData);
+      similarStatus.innerHTML = `<span style="color:var(--danger-color);">응답 구조 오류</span><br><small style="opacity:0.7;">${escapeHtml(JSON.stringify(resData).substring(0, 200))}</small>`;
+      return;
+    }
+    
     const responseText = resData.candidates[0].content.parts[0].text;
-    const parsedData = JSON.parse(responseText);
+    
+    // JSON 파싱 — 마크다운 코드블록 감싸기 제거
+    const jsonStr = responseText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsedData = JSON.parse(jsonStr);
     const recommendations = parsedData.recommendations || [];
     
     similarStatus.style.display = 'none';
@@ -1174,8 +1193,8 @@ async function getSimilarSongs(title, artist) {
     
     renderSimilarSongs(recommendations);
   } catch (error) {
-    console.error('Gemini recommendation error:', error);
-    similarStatus.textContent = '추천 곡을 불러오지 못했습니다. API 키가 정확한지 확인해 주세요.';
+    console.error('[Gemini] Exception:', error);
+    similarStatus.innerHTML = `<span style="color:var(--danger-color);font-weight:600;">오류 발생</span><br><small style="opacity:0.7;word-break:break-all;">${escapeHtml(error.message)}</small>`;
   }
 }
 
