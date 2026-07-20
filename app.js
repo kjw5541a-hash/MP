@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '4.2'; // Lock screen play interrupt fix & neighbor swap sorting release
+const APP_VERSION = '4.3'; // Lock screen play/pause sync, metadata title sync, similar songs return fix
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -475,6 +475,8 @@ function playTrack(track, trackList, index) {
       updatePlayButtonUI();
       updateMediaSessionPositionState();
       highlightPlayingItem();
+      // Re-apply metadata AFTER successful play to ensure iOS lock screen picks it up
+      updateMediaSessionMetadata(track);
     })
     .catch(err => {
       console.error('Audio playback failed:', err);
@@ -490,7 +492,7 @@ function playTrack(track, trackList, index) {
 async function restoreAudioPlayback() {
   if (state.currentIndex >= 0 && state.currentTrackList[state.currentIndex]) {
     // iOS WebKit 환경에서 락스크린 탈출 및 다이내믹 아일랜드 복귀 시 Blob URL 유실 여부 검증
-    if (!audio.src || audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE || (state.isPlaying && audio.paused)) {
+    if (!audio.src || audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
       console.log('iOS WebKit Eviction 감지: 끊어진 재생 세션을 복구합니다.');
       
       const currentTrack = state.currentTrackList[state.currentIndex];
@@ -800,6 +802,18 @@ function setupMediaSession() {
         if ('mediaSession' in navigator) {
           navigator.mediaSession.playbackState = 'playing';
         }
+        // Ensure lock screen title stays correct after resume
+        if (state.currentIndex >= 0 && state.currentTrackList.length > 0) {
+          const currentTrack = state.currentTrackList[state.currentIndex];
+          if (currentTrack) {
+            updateMediaSessionMetadata(currentTrack);
+            updateMediaSessionPositionState();
+          }
+        }
+      }).catch(err => {
+        console.error('MediaSession play handler error:', err);
+        state.isPlaying = false;
+        updatePlayButtonUI();
       });
     });
 
@@ -904,20 +918,14 @@ function setupAudioListeners() {
     }
   });
 
-  audio.addEventListener('play', () => {
-    if (state.currentIndex >= 0 && state.currentTrackList.length > 0) {
-      const currentTrack = state.currentTrackList[state.currentIndex];
-      if (currentTrack) {
-        updateMediaSessionMetadata(currentTrack);
-      }
-    }
-  });
-
-  audio.addEventListener('playing', () => {
-    if (state.currentIndex >= 0 && state.currentTrackList.length > 0) {
-      const currentTrack = state.currentTrackList[state.currentIndex];
-      if (currentTrack) {
-        updateMediaSessionMetadata(currentTrack);
+  // Sync play/pause state from external controls (e.g. AirPods, lock screen)
+  audio.addEventListener('pause', () => {
+    // Only sync if we think we're still playing (external pause)
+    if (state.isPlaying) {
+      state.isPlaying = false;
+      updatePlayButtonUI();
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
       }
     }
   });
@@ -1340,14 +1348,9 @@ function renderSimilarSongs(songs) {
     
     li.querySelector('.btn-search-recommend').addEventListener('click', (e) => {
       const searchQuery = e.currentTarget.dataset.query;
-      
-      const searchTabButton = document.querySelector('.nav-item[data-view="view-search"]');
-      if (searchTabButton) {
-        searchTabButton.click();
-      }
-      
-      youtubeSearchInput.value = searchQuery;
-      searchYouTubeVideos(searchQuery);
+      // Open YouTube directly without switching tabs, so the user returns to the same screen
+      const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
+      window.open(searchUrl, '_blank');
     });
     
     similarResultsList.appendChild(li);
