@@ -1,0 +1,1044 @@
+/* boombox-proto.css - 1980s Classic Boombox Front Skin */
+
+:root {
+  --boombox-black: #1a1a1c;
+  --panel-grey: #2e2f33;
+  --border-silver: #a0a5b0;
+  --led-green: #39ff14;
+  --led-orange: #ff9900;
+  --led-red: #ff003c;
+  --text-yellow: #ffd700;
+  
+  --hud-font: 'Share Tech Mono', monospace;
+  --brand-font: 'Orbitron', sans-serif;
+  --label-font: 'Caveat', cursive;
+  --ui-font: 'Outfit', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  font-family: var(--ui-font);
+  background-color: #0b0c0e;
+  color: #e2e8f0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+/* Background Wall Graphic */
+.street-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, #252830 0%, #0d0f12 100%);
+  z-index: -2;
+}
+
+.shadow-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.85) 100%);
+}
+
+/* Page Outer Structure */
+.proto-container {
+  display: flex;
+  gap: 30px;
+  max-width: 840px;
+  width: 100%;
+  padding: 20px;
+  z-index: 1;
+}
+
+.proto-top-nav {
+  position: absolute;
+  top: 15px;
+  left: 20px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  z-index: 10;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.proto-badge {
+  font-family: var(--brand-font);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--led-orange);
+  letter-spacing: 1px;
+}
+
+/* Boombox Chassis Main */
+.boombox-chassis {
+  flex: 1.2;
+  background-color: var(--boombox-black);
+  border: 6px solid #111;
+  border-top: 8px solid #2e2f33;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 
+    0 30px 70px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  max-width: 420px;
+  height: 820px;
+}
+
+/* Metal brushed textures */
+.bb-top-panel {
+  background: linear-gradient(180deg, #d8dcdb 0%, #a2a8a7 100%);
+  border: 2px solid #5a5f5e;
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  box-shadow: 
+    0 4px 10px rgba(0,0,0,0.3),
+    inset 0 1px 1px rgba(255,255,255,0.7);
+  color: #111;
+}
+
+.bb-brand-area {
+  flex: 1;
+}
+
+.bb-brand {
+  font-family: var(--brand-font);
+  font-weight: 900;
+  font-size: 1.15rem;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.bb-subbrand {
+  font-family: var(--brand-font);
+  font-size: 0.45rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  margin-top: 3px;
+  opacity: 0.8;
+}
+
+/* Knobs Styling */
+.bb-knobs-row {
+  display: flex;
+  gap: 12px;
+}
+
+.bb-knob-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.knob-label {
+  font-size: 0.5rem;
+  font-weight: 800;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.bb-dial-knob {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0f0f0 0%, #888 100%);
+  border: 1px solid #666;
+  position: relative;
+  cursor: ns-resize; /* Drag up/down to rotate */
+  box-shadow: 0 3px 5px rgba(0,0,0,0.25);
+  transition: transform 0.05s linear;
+}
+
+.dial-marker {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 7px;
+  background-color: #111;
+}
+
+.dial-numbers {
+  font-family: var(--brand-font);
+  font-size: 0.42rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  color: #444;
+  margin-top: 2px;
+  padding: 0 2px;
+}
+
+.dial-numbers span {
+  opacity: 0.5;
+}
+
+/* Meters Panel */
+.bb-meter-panel {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 16px;
+  padding: 10px;
+  background-color: #121214;
+  border-radius: 6px;
+  border: 1px solid #222;
+}
+
+.bb-led-meters {
+  flex: 1.3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.meter-channel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.channel-label {
+  font-family: var(--brand-font);
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: #9ca3af;
+  width: 32px;
+}
+
+.led-bar-horizontal {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+}
+
+.led-dot {
+  flex: 1;
+  height: 6px;
+  border-radius: 1px;
+  background-color: #24252a; /* off state */
+  transition: all 0.05s ease;
+}
+
+/* Active LED classes */
+.led-dot.green.active {
+  background-color: var(--led-green);
+  box-shadow: 0 0 6px var(--led-green);
+}
+.led-dot.orange.active {
+  background-color: var(--led-orange);
+  box-shadow: 0 0 6px var(--led-orange);
+}
+.led-dot.red.active {
+  background-color: var(--led-red);
+  box-shadow: 0 0 6px var(--led-red);
+}
+
+/* LCD block counter */
+.bb-counter-box {
+  flex: 0.9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-left: 1px dashed #333;
+  padding-left: 10px;
+}
+
+.counter-tag {
+  font-family: var(--brand-font);
+  font-size: 0.45rem;
+  font-weight: 800;
+  color: #718096;
+  margin-bottom: 4px;
+}
+
+.counter-lcd {
+  background: #090a0c;
+  color: var(--led-red);
+  font-family: var(--hud-font);
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  width: 100%;
+  text-align: center;
+  border: 1px solid #1f1f23;
+  text-shadow: 0 0 8px rgba(255, 0, 60, 0.7);
+}
+
+.counter-reset-btn {
+  font-size: 0.45rem;
+  font-weight: 800;
+  background: #374151;
+  border: 1px solid #4b5563;
+  color: #fff;
+  border-radius: 2px;
+  padding: 1px 5px;
+  margin-top: 4px;
+  cursor: pointer;
+  outline: none;
+}
+.counter-reset-btn:active {
+  background: #1f2937;
+}
+
+/* Middle Deck: Cassette Compartment & Speakers */
+.bb-middle-deck {
+  display: flex;
+  height: 250px;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+/* Speakers overflow on the sides */
+.speaker-grille {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 160px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #080808 20%, #202022 55%, #050505 85%);
+  border: 5px solid #2d2d30;
+  box-shadow: 
+    inset 0 10px 20px rgba(0,0,0,0.8),
+    0 10px 15px rgba(0,0,0,0.6);
+  z-index: 1;
+}
+
+.speaker-cone {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #555 10%, #151515 80%);
+  border: 2px solid #000;
+}
+
+.speaker-edge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, transparent, transparent 3px, rgba(255,255,255,0.01) 3px, rgba(255,255,255,0.01) 6px);
+  pointer-events: none;
+}
+
+.left-speaker {
+  left: -125px; /* peek only edge */
+}
+
+.right-speaker {
+  right: -125px; /* peek only edge */
+}
+
+/* Cassette compartment box */
+.cassette-deck-compartment {
+  flex: 1;
+  background-color: #0d0e12;
+  border: 5px solid #22252a;
+  border-radius: 12px;
+  height: 236px;
+  padding: 12px;
+  z-index: 2; /* overlays speaker edges */
+  box-shadow: inset 0 10px 25px rgba(0, 0, 0, 0.9);
+  position: relative;
+  margin: 0 45px; /* leave space for speaker curves */
+}
+
+.deck-frame-decal {
+  position: absolute;
+  bottom: 6px;
+  right: 12px;
+  font-family: var(--brand-font);
+  font-weight: 800;
+  font-size: 0.55rem;
+  color: #4b5563;
+  letter-spacing: 0.5px;
+}
+
+.glass-door-holder {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  height: 100%;
+  width: 100%;
+  padding: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.03);
+}
+
+.glass-reflection-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 25%, transparent 50%);
+  transform: skewX(-20deg);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Cassette Tape */
+.cassette-tape {
+  background: #17181c;
+  border: 1px solid #000;
+  border-radius: 6px;
+  height: 100%;
+  width: 100%;
+  padding: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.cassette-tape.ejected {
+  transform: translateY(-240px) rotate(-8deg) scale(0.8);
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.cassette-label-skin {
+  background: linear-gradient(180deg, #ffcc00 0%, #f5b041 55%, #e74c3c 60%, #c0392b 100%);
+  color: #fff;
+  border-radius: 3px;
+  padding: 4px 8px;
+  height: 72px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.label-a-badge {
+  font-family: var(--brand-font);
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #fff;
+  align-self: flex-start;
+  line-height: 1;
+}
+
+.label-write-area {
+  font-family: var(--label-font);
+  font-size: 1.6rem;
+  line-height: 1.1;
+  color: #111;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.8);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.label-info-text {
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+  text-align: right;
+  opacity: 0.8;
+}
+
+/* Spindle gears and reels */
+.cassette-gears-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  margin-top: 10px;
+  position: relative;
+}
+
+.gear-spindle {
+  width: 44px;
+  height: 44px;
+  position: relative;
+  z-index: 2;
+}
+
+.spindle-gear-svg {
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  position: relative;
+}
+
+.spindle-gear-svg.rotating {
+  animation: spinReels 3.5s linear infinite;
+}
+.spindle-gear-svg.rotating.fast {
+  animation-duration: 0.4s;
+}
+.spindle-gear-svg.rotating.reverse {
+  animation-direction: reverse;
+}
+
+.tape-roll-wound {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #252528 35%, #0a0a0d 75%);
+  border: 1px solid #ffd700;
+  transition: width 0.3s ease, height 0.3s ease;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+}
+
+.tape-view-glass {
+  flex: 1;
+  height: 22px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #0d0d0d;
+  border-radius: 4px;
+  margin: 0 10px;
+  position: relative;
+}
+
+.screws {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background-color: #555;
+  border-radius: 50%;
+}
+.screws.s-tl { top: 2px; left: 2px; }
+.screws.s-tr { top: 2px; right: 2px; }
+.screws.s-bl { bottom: 2px; left: 2px; }
+.screws.s-br { bottom: 2px; right: 2px; }
+
+.tape-maxell-logo {
+  font-family: var(--brand-font);
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  margin-top: 8px;
+  letter-spacing: 2px;
+}
+.maxell-red {
+  color: var(--led-red);
+}
+
+/* Sliders / Treble & Bass HUD screen */
+.bb-hud-panel {
+  background: #141416;
+  border: 2px solid #232328;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bb-hud-title-screen {
+  background: #090a0c;
+  border: 1px solid #27272c;
+  padding: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-bottom: 12px;
+}
+
+.hud-scroller {
+  display: inline-block;
+  font-family: var(--hud-font);
+  font-size: 0.75rem;
+  color: var(--text-yellow);
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+  animation: scrollText 12s linear infinite;
+  padding-left: 100%;
+}
+
+.bb-sliders-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.bb-slider-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.slider-tag {
+  font-family: var(--brand-font);
+  font-size: 0.45rem;
+  font-weight: 800;
+  color: #a0aec0;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.bb-fader-slot {
+  position: relative;
+  width: 10px;
+  height: 60px;
+  background: #08080a;
+  border-radius: 4px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.bb-vertical-range {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  -webkit-appearance: slider-vertical;
+}
+
+.bb-fader-handle {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 0);
+  bottom: 50%; /* JS maps this from input value */
+  width: 22px;
+  height: 10px;
+  background: linear-gradient(180deg, #f0f0f0 0%, #777 100%);
+  border: 1px solid #444;
+  border-radius: 2px;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.fader-scale {
+  font-family: var(--brand-font);
+  font-size: 0.42rem;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 60px;
+  color: #718096;
+  margin-left: 14px;
+  position: absolute;
+  transform: translateX(12px) translateY(12px);
+}
+
+/* Function Switch */
+.bb-toggle-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bb-switch-box {
+  padding-top: 10px;
+}
+
+.bb-switch-rail {
+  position: relative;
+  width: 90px;
+  height: 16px;
+  background: #08080a;
+  border: 1px solid #232328;
+  border-radius: 8px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.bb-switch-handle {
+  position: absolute;
+  top: -2px;
+  width: 24px;
+  height: 18px;
+  background: linear-gradient(180deg, #fefefe 0%, #b2b8b7 100%);
+  border: 1px solid #5a5f5e;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 3px 5px rgba(0,0,0,0.3);
+}
+
+/* Click stops for Function switch */
+.bb-switch-handle.position-radio { left: 4px; }
+.bb-switch-handle.position-tape { left: 32px; }
+.bb-switch-handle.position-line { left: 60px; }
+
+.rail-clicks {
+  position: absolute;
+  bottom: -15px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.rail-clicks span {
+  font-family: var(--brand-font);
+  font-size: 0.38rem;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+/* Upload Port */
+.bb-port-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.jack-input-port {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  padding: 8px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.jack-input-port:hover {
+  border-color: var(--led-orange);
+  background: rgba(255, 153, 0, 0.05);
+}
+
+.jack-hole {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #000;
+  border: 2px solid #888;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.jack-label {
+  font-family: var(--brand-font);
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #a0aec0;
+}
+
+.jack-input-port:hover .jack-label {
+  color: #fff;
+}
+
+/* Mechanical Keyboard Deck */
+.bb-keyboard-deck {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  border-top: 2px solid #222;
+  padding-top: 18px;
+}
+
+.bb-key {
+  flex: 1;
+  height: 62px;
+  background: linear-gradient(180deg, #444 0%, #222 100%);
+  border: 2px solid #111;
+  border-top-color: #555;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 2px 6px 2px;
+  /* Massive mechanical keyboard shadows */
+  box-shadow: 
+    0 7px 0 #0d0d0f, 
+    0 10px 14px rgba(0, 0, 0, 0.6), 
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transition: all 0.1s cubic-bezier(0.175, 0.885, 0.32, 1);
+  outline: none;
+}
+
+.bb-key:hover {
+  background: linear-gradient(180deg, #4c4c4c 0%, #282828 100%);
+}
+
+.key-top {
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bb-key .key-label {
+  font-family: var(--brand-font);
+  font-size: 0.42rem;
+  font-weight: 800;
+  color: #888;
+  letter-spacing: 0.2px;
+}
+
+.red-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--led-red);
+  box-shadow: 0 0 5px var(--led-red);
+}
+
+/* Mechanical press actions */
+.bb-key:active, .bb-key.pressed {
+  transform: translateY(5px);
+  box-shadow: 
+    0 2px 0 #0d0d0f, 
+    0 4px 6px rgba(0, 0, 0, 0.7), 
+    inset 0 3px 5px rgba(0, 0, 0, 0.9);
+  background: linear-gradient(180deg, #1b1b1d 0%, #111 100%);
+  border-top-color: #222;
+}
+
+.bb-key.pressed .key-top {
+  color: var(--led-orange);
+  text-shadow: 0 0 6px rgba(255, 153, 0, 0.6);
+}
+
+/* Headphone Socket at the bottom edge */
+.bb-bottom-jack {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  border-top: 1px solid #1f1f23;
+  padding-top: 10px;
+}
+
+.headphone-socket {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #000;
+  border: 1px dashed #777;
+  padding: 2px;
+}
+
+.socket-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #050505;
+  border: 1px solid #bbb;
+}
+
+.socket-text {
+  font-family: var(--brand-font);
+  font-size: 0.45rem;
+  font-weight: 800;
+  color: #4b5563;
+}
+
+/* Sidebar Playlist drawer */
+.bb-playlist-drawer {
+  flex: 0.8;
+  background: rgba(22, 23, 27, 0.85);
+  border: 2px solid #232328;
+  border-radius: 12px;
+  padding: 20px;
+  height: 820px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.bb-playlist-drawer h2 {
+  font-family: var(--brand-font);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--led-orange);
+  padding-bottom: 12px;
+  border-bottom: 1px solid #333;
+  margin-bottom: 15px;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.bb-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.empty-msg {
+  font-size: 0.75rem;
+  color: #555;
+  text-align: center;
+  line-height: 1.4;
+  padding-top: 20px;
+}
+
+.bb-track-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #141416;
+  border: 1px solid #1f1f23;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bb-track-item:hover {
+  border-color: var(--led-orange);
+  background: #19191d;
+}
+
+.bb-track-item.active {
+  background: rgba(255, 153, 0, 0.08);
+  border-color: var(--led-orange);
+}
+
+.bb-track-idx {
+  font-family: var(--brand-font);
+  font-size: 0.65rem;
+  color: #718096;
+}
+
+.bb-track-item.active .bb-track-idx {
+  color: var(--led-orange);
+}
+
+.bb-track-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.bb-track-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-track-artist {
+  font-size: 0.65rem;
+  color: #718096;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.bb-track-duration {
+  font-family: var(--hud-font);
+  font-size: 0.7rem;
+  color: var(--text-yellow);
+}
+
+/* Responsive adjustment */
+@media (max-width: 768px) {
+  .proto-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  .boombox-chassis {
+    width: 100%;
+    max-width: 375px;
+    height: 720px;
+    padding: 16px;
+  }
+  .bb-playlist-drawer {
+    width: 100%;
+    max-width: 375px;
+    height: 300px;
+  }
+  .speaker-grille {
+    width: 140px;
+    height: 190px;
+  }
+  .left-speaker { left: -115px; }
+  .right-speaker { right: -115px; }
+  .cassette-deck-compartment {
+    margin: 0 35px;
+    height: 200px;
+  }
+  .cassette-label-skin {
+    height: 60px;
+  }
+  .label-write-area {
+    font-size: 1.3rem;
+  }
+  .bb-dial-knob {
+    width: 28px;
+    height: 28px;
+  }
+  .bb-vertical-range {
+    height: 50px;
+  }
+  .bb-fader-slot {
+    height: 50px;
+  }
+  .fader-scale {
+    height: 50px;
+  }
+  .bb-keyboard-deck {
+    height: 54px;
+    padding-top: 12px;
+  }
+  .bb-key {
+    height: 54px;
+  }
+}

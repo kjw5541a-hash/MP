@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Cyber-Sync Walkman Prototype</title>
+  
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <link rel="stylesheet" href="./cassette-proto.css">
+</head>
+<body>
+
+  <!-- Background neon grid and glow orbs -->
+  <div class="synth-bg">
+    <div class="grid-overlay"></div>
+    <div class="neon-orb orb-purple"></div>
+    <div class="neon-orb orb-cyan"></div>
+  </div>
+
+  <div class="proto-container">
+    
+    <!-- Top Bar -->
+    <header class="proto-header">
+      <a href="index.html" class="btn-back" title="메인 앱으로 돌아가기">
+        <i class="fa-solid fa-arrow-left"></i> Main MP
+      </a>
+      <h2 class="brand-title">WALKMAN CS-W85</h2>
+      <div class="header-indicator">
+        <span class="status-dot green"></span> PROT
+      </div>
+    </header>
+
+    <!-- Main Walkman Chassis -->
+    <main class="walkman-chassis">
+      
+      <!-- Top Brand Decal & Display -->
+      <div class="walkman-top-display">
+        <div class="logo-group">
+          <div class="logo-cyber">CYBER-SYNC</div>
+          <div class="logo-stereo">STEREO</div>
+        </div>
+        
+        <!-- Track Title & Time (Glass overlay) -->
+        <div class="info-lcd-screen">
+          <div class="lcd-scroller">
+            <span id="lcd-track-title">곡을 추가해 주세요 (Drag/Click 아래)</span>
+          </div>
+          <div class="lcd-time">
+            <span id="lcd-time-current">00:00</span>
+            <span class="lcd-separator">/</span>
+            <span id="lcd-time-total">00:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cassette Compartment Slot -->
+      <div class="cassette-deck-outer">
+        <div class="cassette-deck-glass">
+          <div class="glass-glare"></div>
+          
+          <!-- Inner Cassette Tape Shell -->
+          <div class="cassette-tape" id="cassette-tape-object">
+            
+            <!-- Cassette Sticker Label -->
+            <div class="cassette-label">
+              <div class="label-tape-info">TYPE II / CHROME</div>
+              <div class="label-handwritten" id="cassette-label-text">My Playlist Vol.1</div>
+              <div class="label-side">A SIDE</div>
+            </div>
+
+            <!-- Tape Reels Container -->
+            <div class="tape-reels-area">
+              
+              <!-- Left Reel -->
+              <div class="reel-spindle left-reel" id="reel-left">
+                <!-- SVG Tape Teeth/Gears -->
+                <svg viewBox="0 0 100 100" class="reel-gear">
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="#ff007f" stroke-width="4" />
+                  <circle cx="50" cy="50" r="28" fill="#181824" />
+                  <!-- Teeth -->
+                  <g fill="#ff007f">
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(0, 50, 50)" />
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(60, 50, 50)" />
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(120, 50, 50)" />
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(180, 50, 50)" />
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(240, 50, 50)" />
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(300, 50, 50)" />
+                  </g>
+                  <circle cx="50" cy="50" r="12" fill="#0d0e15" />
+                  <polygon points="50,44 55,53 45,53" fill="#ff007f" />
+                </svg>
+                <div class="tape-roll-wrap" id="tape-roll-left">
+                  <!-- Dynamic visual representation of rolled tape -->
+                  <div class="tape-wound" id="wound-left" style="width: 80px; height: 80px;"></div>
+                </div>
+              </div>
+
+              <!-- Center Transparent Window -->
+              <div class="center-window">
+                <div class="window-screws top-left"></div>
+                <div class="window-screws top-right"></div>
+                <div class="window-screws bottom-left"></div>
+                <div class="window-screws bottom-right"></div>
+              </div>
+
+              <!-- Right Reel -->
+              <div class="reel-spindle right-reel" id="reel-right">
+                <!-- SVG Tape Teeth/Gears -->
+                <svg viewBox="0 0 100 100" class="reel-gear">
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="#ff007f" stroke-width="4" />
+                  <circle cx="50" cy="50" r="28" fill="#181824" />
+                  <!-- Teeth -->
+                  <g fill="#ff007f">
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(0, 50, 50)" />
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(60, 50, 50)" />
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(120, 50, 50)" />
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(180, 50, 50)" />
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(240, 50, 50)" />
+                    <rect x="47" y="10" width="6" height="15" rx="2" transform="rotate(300, 50, 50)" />
+                  </g>
+                  <circle cx="50" cy="50" r="12" fill="#0d0e15" />
+                  <polygon points="50,44 55,53 45,53" fill="#ff007f" />
+                </svg>
+                <div class="tape-roll-wrap" id="tape-roll-right">
+                  <div class="tape-wound" id="wound-right" style="width: 35px; height: 35px;"></div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Brand Logo on cassette -->
+            <div class="cassette-brand">maxell <span class="model-xl">XLII-S 90</span></div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Indicator Lights -->
+      <div class="status-lights">
+        <div class="light-group">
+          <div class="light-led red" id="led-rec"></div>
+          <span class="light-label">REC</span>
+        </div>
+        <div class="light-group">
+          <div class="light-led green" id="led-play"></div>
+          <span class="light-label">PLAY</span>
+        </div>
+        <div class="light-group">
+          <div class="light-led cyan" id="led-dir"></div>
+          <span class="light-label">DIR</span>
+        </div>
+        <div class="light-group">
+          <div class="battery-bar">
+            <span class="bar-seg active"></span>
+            <span class="bar-seg active"></span>
+            <span class="bar-seg active"></span>
+            <span class="bar-seg" id="bat-last"></span>
+          </div>
+          <span class="light-label">BATT</span>
+        </div>
+      </div>
+
+      <!-- Lower Control Panel (Volume and Peak Level) -->
+      <div class="lower-audio-panel">
+        
+        <!-- Volume Slider (Vertical styled slot) -->
+        <div class="volume-slider-group">
+          <span class="control-tag">VOLUME</span>
+          <div class="vol-slider-rail" id="vol-rail">
+            <input type="range" id="vol-slider" min="0" max="100" value="80" orient="vertical">
+            <div class="vol-slider-thumb" id="vol-thumb"></div>
+          </div>
+          <div class="vol-labels">
+            <span>10</span>
+            <span>5</span>
+            <span>0</span>
+          </div>
+        </div>
+
+        <!-- Realtime Peak Level Meter -->
+        <div class="peak-level-container">
+          <span class="control-tag">PEAK LEVEL METER</span>
+          <div class="level-meter-box">
+            <canvas id="peak-canvas"></canvas>
+          </div>
+          <div class="db-labels">
+            <span>-30dB</span>
+            <span>-10dB</span>
+            <span>0dB</span>
+            <span>+6dB</span>
+          </div>
+        </div>
+        
+        <!-- Toggle & Settings knobs -->
+        <div class="toggle-knobs-group">
+          <div class="knob-label">DOLBY NR</div>
+          <button class="knob-switch" id="switch-dolby">
+            <span class="switch-toggle-knob"></span>
+          </button>
+          
+          <div class="knob-label" style="margin-top: 10px;">TAPE TYPE</div>
+          <button class="knob-switch active" id="switch-tapetype">
+            <span class="switch-toggle-knob"></span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- File Drag & Drop Zone (Semi-transparent / click to import) -->
+      <div class="file-dropzone" id="file-dropzone">
+        <input type="file" id="file-input" accept="audio/*" multiple style="display: none;">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <span>이곳에 음악 파일(mp3, m4a 등)을 드래그하거나 클릭하여 넣으세요</span>
+      </div>
+
+      <!-- Mechanical Buttons Deck -->
+      <div class="mechanical-buttons-deck">
+        
+        <!-- REW Button -->
+        <button class="mech-btn" id="btn-rew" title="되감기">
+          <span class="btn-cap"><i class="fa-solid fa-backward"></i></span>
+          <span class="btn-label">REW</span>
+        </button>
+
+        <!-- PLAY Button -->
+        <button class="mech-btn btn-play-pause" id="btn-play" title="재생/일시정지">
+          <span class="btn-cap"><i class="fa-solid fa-play"></i></span>
+          <span class="btn-label">PLAY</span>
+        </button>
+
+        <!-- STOP Button -->
+        <button class="mech-btn" id="btn-stop" title="정지">
+          <span class="btn-cap"><i class="fa-solid fa-square"></i></span>
+          <span class="btn-label">STOP</span>
+        </button>
+
+        <!-- FF Button -->
+        <button class="mech-btn" id="btn-ff" title="빨리감기">
+          <span class="btn-cap"><i class="fa-solid fa-forward"></i></span>
+          <span class="btn-label">FF</span>
+        </button>
+
+        <!-- EJECT Button -->
+        <button class="mech-btn" id="btn-eject" title="음원 꺼내기">
+          <span class="btn-cap"><i class="fa-solid fa-eject"></i></span>
+          <span class="btn-label">EJECT</span>
+        </button>
+
+      </div>
+
+    </main>
+
+    <!-- Playlist Tracks Sidebar / Drawer -->
+    <section class="proto-sidebar">
+      <h3>가져온 음악 목록</h3>
+      <ul class="proto-track-list" id="proto-track-list">
+        <li class="empty-list-msg">추가된 곡이 없습니다.</li>
+      </ul>
+    </section>
+
+  </div>
+
+  <!-- Audio Node Element -->
+  <audio id="audio-player" style="display: none;"></audio>
+
+  <!-- Prototype Javascript -->
+  <script type="module" src="./cassette-proto.js"></script>
+</body>
+</html>

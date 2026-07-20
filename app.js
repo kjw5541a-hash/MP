@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '3.9'; // iOS Lock Screen Skip Buttons Fix
+const APP_VERSION = '4.0'; // Major UI & UX Upgrade Release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -62,6 +62,8 @@ const viewElements = document.querySelectorAll('.content-view');
 const navItems = document.querySelectorAll('.nav-item');
 const folderInput = document.getElementById('folder-import');
 const btnThemeToggle = document.getElementById('theme-toggle');
+const themeMenu = document.getElementById('theme-menu');
+const themeMenuItems = document.querySelectorAll('.theme-menu-item');
 
 // Player UI Elements
 const playerArt = document.getElementById('player-art');
@@ -141,12 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Load theme from localStorage
     const savedTheme = localStorage.getItem('mp-theme') || 'neon';
-    if (savedTheme === 'glass') {
-      document.body.classList.add('theme-glass');
-      updateThemeToggleIcon(true);
-    } else {
-      updateThemeToggleIcon(false);
-    }
+    applyTheme(savedTheme);
     
     // Load initial data
     await renderAllViews();
@@ -174,7 +171,27 @@ async function renderAllViews() {
 
 // 1. Library (All Songs)
 async function renderLibrary(searchFilter = '') {
-  const tracks = await db.getAllTracks();
+  let tracks = await db.getAllTracks();
+  
+  // Sort tracks according to localStorage custom order
+  const orderStr = localStorage.getItem('mp-track-order');
+  if (orderStr) {
+    try {
+      const orderIds = JSON.parse(orderStr);
+      const idToIndex = {};
+      orderIds.forEach((id, idx) => {
+        idToIndex[id] = idx;
+      });
+      tracks.sort((a, b) => {
+        const idxA = idToIndex[a.id] !== undefined ? idToIndex[a.id] : 999999;
+        const idxB = idToIndex[b.id] !== undefined ? idToIndex[b.id] : 999999;
+        return idxA - idxB;
+      });
+    } catch (e) {
+      console.error('[Sorting] Error sorting tracks:', e);
+    }
+  }
+  
   libraryList.innerHTML = '';
   
   const filtered = tracks.filter(t => 
@@ -247,6 +264,19 @@ async function renderLibrary(searchFilter = '') {
       if (confirm('이 곡을 보관함에서 완전히 삭제하시겠습니까?')) {
         const trackId = parseInt(btn.dataset.id);
         await db.deleteTrack(trackId);
+        
+        // Remove from localStorage track order array
+        const orderStr = localStorage.getItem('mp-track-order');
+        if (orderStr) {
+          try {
+            let order = JSON.parse(orderStr);
+            order = order.filter(id => id !== trackId);
+            localStorage.setItem('mp-track-order', JSON.stringify(order));
+          } catch (e) {
+            console.error('[Sorting] Error updating track order on delete:', e);
+          }
+        }
+        
         await renderAllViews();
         if (state.currentTrackList[state.currentIndex]?.id === trackId) {
           audio.pause();
@@ -642,12 +672,24 @@ async function importFiles(files) {
 
       const duration = await getAudioDuration(file);
 
-      await db.addTrack({
+      const newId = await db.addTrack({
         title,
         artist,
         duration,
         audioBlob: file
       });
+      
+      const orderStr = localStorage.getItem('mp-track-order');
+      let order = [];
+      if (orderStr) {
+        try {
+          order = JSON.parse(orderStr);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      order.push(newId);
+      localStorage.setItem('mp-track-order', JSON.stringify(order));
       
     } catch (err) {
       console.error('Error importing file:', file.name, err);
@@ -676,17 +718,36 @@ async function handleFolderImport(e) {
 }
 
 // --- THEME MANAGEMENT ENGINE ---
-function toggleTheme() {
-  const isGlass = document.body.classList.toggle('theme-glass');
-  localStorage.setItem('mp-theme', isGlass ? 'glass' : 'neon');
-  updateThemeToggleIcon(isGlass);
+function toggleTheme(e) {
+  e.stopPropagation();
+  themeMenu.classList.toggle('active');
 }
 
-function updateThemeToggleIcon(isGlass) {
-  if (isGlass) {
-    btnThemeToggle.innerHTML = '<i class="fa-solid fa-bolt"></i>';
-  } else {
+function applyTheme(themeName) {
+  document.body.classList.remove('theme-glass', 'theme-neumorphic');
+  
+  if (themeName === 'glass') {
+    document.body.classList.add('theme-glass');
+  } else if (themeName === 'neumorphic') {
+    document.body.classList.add('theme-neumorphic');
+  }
+  
+  themeMenuItems.forEach(item => {
+    item.classList.toggle('active', item.dataset.theme === themeName);
+  });
+  
+  updateThemeToggleIcon(themeName);
+  localStorage.setItem('mp-theme', themeName);
+  themeMenu.classList.remove('active');
+}
+
+function updateThemeToggleIcon(themeName) {
+  if (themeName === 'glass') {
     btnThemeToggle.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
+  } else if (themeName === 'neumorphic') {
+    btnThemeToggle.innerHTML = '<i class="fa-solid fa-circle-half-stroke"></i>';
+  } else {
+    btnThemeToggle.innerHTML = '<i class="fa-solid fa-bolt"></i>';
   }
 }
 
@@ -817,6 +878,20 @@ function setupAudioListeners() {
 function setupEventListeners() {
   folderInput.addEventListener('change', handleFolderImport);
   btnThemeToggle.addEventListener('click', toggleTheme);
+
+  // Theme dropdown item click handlers
+  themeMenuItems.forEach(item => {
+    item.addEventListener('click', () => {
+      applyTheme(item.dataset.theme);
+    });
+  });
+
+  // Close theme menu when clicking outside of toggle button and dropdown
+  window.addEventListener('click', (e) => {
+    if (!e.target.closest('#theme-toggle') && !e.target.closest('#theme-menu')) {
+      themeMenu.classList.remove('active');
+    }
+  });
 
   // 라이프사이클 복원 핸들러 바인딩 (iOS 백그라운드 생명주기 대응)
   document.addEventListener('visibilitychange', () => {
@@ -977,6 +1052,9 @@ function setupEventListeners() {
     }
     getSimilarSongs(title, artist);
   });
+
+  // Drag and Drop touch-based library reordering init
+  setupLibraryReordering();
 }
 
 // --- MODAL UTILS ---
@@ -1034,102 +1112,47 @@ function escapeHtml(string) {
 }
 
 // --- YOUTUBE SEARCH & DOWNLOAD INTEGRATION ---
-const PIPED_INSTANCES = [
-  'https://api.piped.yt',
-  'https://pipedapi.kavin.rocks',
-  'https://pipedapi.colby.land',
-  'https://pipedapi.tokhmi.xyz',
-  'https://piped-api.lunar.icu'
-];
-
-async function searchYouTubeVideos(query) {
+function searchYouTubeVideos(query) {
   if (!query.trim()) return;
-  youtubeSearchStatus.style.display = 'block';
-  youtubeSearchStatus.textContent = '유튜브에서 검색 중...';
-  youtubeResultsList.innerHTML = '';
   
-  let success = false;
-  let items = [];
+  const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+  window.open(searchUrl, '_blank');
   
-  for (const instance of PIPED_INSTANCES) {
-    try {
-      console.log(`Trying search on: ${instance}`);
-      const response = await fetch(`${instance}/search?q=${encodeURIComponent(query)}&filter=videos`);
-      if (response.ok) {
-        const data = await response.json();
-        items = data.items || [];
-        success = true;
-        break;
-      }
-    } catch (e) {
-      console.warn(`Failed to fetch from ${instance}:`, e);
-    }
-  }
-  
-  youtubeSearchStatus.style.display = 'none';
-  
-  if (!success) {
-    youtubeResultsList.innerHTML = `
-      <li style="text-align:center; padding:30px 20px; opacity:0.8; list-style:none;">
-        <div style="font-size: 0.9rem; color: var(--danger-color); margin-bottom: 12px; font-weight:700;">유튜브 검색 서버 연결 실패</div>
-        <div style="font-size: 0.8rem; opacity: 0.7; line-height: 1.5; margin-bottom: 16px;">
-          일시적으로 모든 검색 대역폭 제한에 도달했습니다.<br>사파리에서 직접 검색 후 유튜브 주소를 복사하거나 아래 버튼을 이용해 주세요.
-        </div>
-        <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(query)}" target="_blank" class="btn btn-secondary" style="border-radius: 8px; font-size: 0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px; background: rgba(255, 255, 255, 0.08); padding: 8px 16px; border: 1px solid rgba(255, 255, 255, 0.12);">
-          <i class="fa-brands fa-youtube" style="color:#ff0000; font-size: 14px;"></i> 유튜브 앱/웹에서 직접 검색하기
-        </a>
-      </li>
-    `;
-    return;
-  }
-  
-  if (items.length === 0) {
-    youtubeResultsList.innerHTML = '<li style="text-align:center; padding:20px; opacity:0.6; list-style:none;">검색 결과가 없습니다.</li>';
-    return;
-  }
-  
-  renderYouTubeSearchResults(items);
-}
-
-function renderYouTubeSearchResults(items) {
-  youtubeResultsList.innerHTML = '';
-  
-  items.forEach(item => {
-    const videoId = item.videoId || (item.url ? item.url.split('v=')[1] : '');
-    if (!videoId) return;
-    
-    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    
-    const li = document.createElement('li');
-    li.className = 'track-item glass-card';
-    li.style.display = 'flex';
-    li.style.alignItems = 'center';
-    li.style.justifyContent = 'space-between';
-    li.style.padding = '10px 15px';
-    li.style.marginBottom = '10px';
-    li.style.borderRadius = '12px';
-    
-    li.innerHTML = `
-      <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0;">
-        <img src="${item.thumbnail || 'https://via.placeholder.com/120x90?text=Video'}" alt="Thumbnail" style="width: 60px; height: 45px; border-radius: 6px; object-fit: cover;">
-        <div style="min-width:0; flex:1;">
-          <div class="track-title" style="font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(item.title)}</div>
-          <div class="track-artist" style="font-size: 0.75rem; opacity: 0.6; margin-top: 3px;">${escapeHtml(item.uploaderName || 'Unknown Artist')}</div>
-        </div>
+  // Show a helper box to run the shortcut once the user copies the video URL from YouTube
+  youtubeResultsList.innerHTML = `
+    <li class="glass-card" style="text-align:center; padding:24px 20px; list-style:none; border-radius:16px; border: 1px solid var(--border-color); background: var(--panel-bg);">
+      <div style="font-size: 1rem; font-weight:700; margin-bottom: 12px; color: var(--accent-color);">
+        <i class="fa-brands fa-youtube" style="color:#ff0000; font-size: 20px; vertical-align: middle; margin-right: 4px;"></i> YouTube 검색창을 열었습니다!
       </div>
-      <button class="btn btn-primary btn-download-track" data-url="${videoUrl}" style="border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; display:flex; align-items:center; gap:4px; margin-left: 10px;">
-        <i class="fa-solid fa-cloud-arrow-down"></i> 다운로드
+      <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.6; max-width: 290px; margin: 0 auto 18px auto; text-align:left;">
+        1. 유튜브에서 음악 영상을 찾아 들어갑니다.<br>
+        2. <strong>[공유]</strong> 버튼을 누르고 <strong>[링크 복사]</strong>를 선택합니다.<br>
+        3. 아래 버튼을 눌러 음원 다운로드 단축어를 실행합니다.
+      </div>
+      <button id="btn-manual-shortcut" class="btn btn-primary" style="margin: 0 auto; width:100%; max-width: 240px; justify-content:center; border-radius: 12px; font-weight:600; padding: 12px 18px;">
+        <i class="fa-solid fa-cloud-arrow-down"></i> 복사한 주소로 다운로드 시작
       </button>
-    `;
-    
-    li.querySelector('.btn-download-track').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const url = e.currentTarget.dataset.url;
-      handleDownloadVideo(url);
+    </li>
+  `;
+  
+  const btnManual = document.getElementById('btn-manual-shortcut');
+  if (btnManual) {
+    btnManual.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text && (text.includes('youtube.com') || text.includes('youtu.be'))) {
+          handleDownloadVideo(text.trim());
+        } else {
+          // If clipboard doesn't contain a youtube link, alert and trigger general shortcut
+          alert('클립보드에 복사된 유튜브 주소가 없습니다. 유튜브에서 먼저 링크 복사를 해주세요.\n\n(단축어를 일단 수동 실행합니다.)');
+          handleDownloadVideo('');
+        }
+      } catch (err) {
+        // Fallback if clipboard API is blocked without permissions
+        handleDownloadVideo('');
+      }
     });
-    
-    youtubeResultsList.appendChild(li);
-  });
+  }
 }
 
 async function handleDownloadVideo(videoUrl) {
@@ -1281,4 +1304,143 @@ function renderSimilarSongs(songs) {
     
     similarResultsList.appendChild(li);
   });
+}
+
+// --- LIBRARY TRACK REORDERING (TOUCH DRAG & DROP) ---
+function setupLibraryReordering() {
+  let isSorting = false;
+  let draggedLi = null;
+  let longPressTimer = null;
+  let startY = 0;
+  let currentY = 0;
+  
+  libraryList.addEventListener('touchstart', (e) => {
+    if (state.activeView !== 'view-library') return;
+    
+    // Find closest track item
+    const li = e.target.closest('#library-list > .track-item');
+    if (!li) return;
+    
+    // Skip if clicking action buttons or target is input
+    if (e.target.closest('.track-item-actions') || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+    
+    const touch = e.touches[0];
+    startY = touch.pageY;
+    
+    longPressTimer = setTimeout(() => {
+      isSorting = true;
+      draggedLi = li;
+      draggedLi.classList.add('sorting');
+      
+      // Trigger slight haptic tick if supported
+      if ('vibrate' in navigator) {
+        navigator.vibrate(15);
+      }
+    }, 450); // 450ms long-press
+  }, { passive: true });
+  
+  libraryList.addEventListener('touchmove', (e) => {
+    const touch = e.touches[0];
+    
+    if (!isSorting) {
+      // Cancel long press if finger moved significantly
+      if (longPressTimer && Math.abs(touch.pageY - startY) > 8) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      return;
+    }
+    
+    e.preventDefault(); // Prevent screen scroll
+    currentY = touch.pageY;
+    const deltaY = currentY - startY;
+    
+    // Move dragging item visually
+    draggedLi.style.transform = `translateY(${deltaY}px) scale(1.02)`;
+    draggedLi.style.zIndex = '1000';
+    
+    // Find hover target list item
+    const clientX = touch.clientX;
+    const clientY = touch.clientY;
+    const element = document.elementFromPoint(clientX, clientY);
+    
+    if (element) {
+      const targetLi = element.closest('#library-list > .track-item');
+      if (targetLi && targetLi !== draggedLi) {
+        const rect = targetLi.getBoundingClientRect();
+        const next = (clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+        
+        libraryList.insertBefore(draggedLi, next ? targetLi.nextSibling : targetLi);
+        
+        startY = touch.pageY; // Re-align Y anchor
+        draggedLi.style.transform = 'translateY(0) scale(1.02)';
+      }
+    }
+  }, { passive: false });
+  
+  const endDrag = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    
+    if (isSorting) {
+      isSorting = false;
+      if (draggedLi) {
+        draggedLi.classList.remove('sorting');
+        draggedLi.style.transform = '';
+        draggedLi.style.zIndex = '';
+        draggedLi = null;
+      }
+      saveTrackOrderFromDOM();
+    }
+  };
+  
+  libraryList.addEventListener('touchend', endDrag);
+  libraryList.addEventListener('touchcancel', endDrag);
+}
+
+function saveTrackOrderFromDOM() {
+  const items = Array.from(libraryList.querySelectorAll('.track-item'));
+  const newOrder = items.map(li => {
+    // Read track ID from favorite button dataset
+    const favBtn = li.querySelector('.action-fav');
+    return favBtn ? parseInt(favBtn.dataset.id) : null;
+  }).filter(Boolean);
+  
+  localStorage.setItem('mp-track-order', JSON.stringify(newOrder));
+  console.log('[Sorting] New track order stored:', newOrder);
+  
+  // Re-index displayed track numbers
+  items.forEach((li, idx) => {
+    const idxEl = li.querySelector('.track-item-index');
+    if (idxEl) {
+      idxEl.textContent = idx + 1;
+    }
+  });
+  
+  updateCurrentTrackListToNewOrder();
+}
+
+async function updateCurrentTrackListToNewOrder() {
+  if (state.currentIndex >= 0 && state.currentTrackList.length > 0) {
+    const currentTrack = state.currentTrackList[state.currentIndex];
+    
+    // Only update if current list represents all library tracks
+    if (state.activeView === 'view-library') {
+      const items = Array.from(libraryList.querySelectorAll('.track-item'));
+      const orderedTracks = [];
+      
+      items.forEach(li => {
+        const id = parseInt(li.querySelector('.action-fav').dataset.id);
+        const match = state.currentTrackList.find(t => t.id === id);
+        if (match) orderedTracks.push(match);
+      });
+      
+      if (orderedTracks.length > 0) {
+        state.currentTrackList = orderedTracks;
+        state.currentIndex = orderedTracks.findIndex(t => t.id === currentTrack.id);
+      }
+    }
+  }
 }

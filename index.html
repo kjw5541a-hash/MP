@@ -31,10 +31,17 @@
     
     <!-- Top Action Bar -->
     <header class="app-header">
-      <div class="logo-area">
+      <div class="logo-area" style="position: relative;">
         <span class="logo-text" id="logo-brand">JWMusicPlayer</span>
         <button id="theme-toggle" class="btn-icon theme-toggle-btn" title="테마 변경"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
         <button id="settings-btn" class="btn-icon settings-btn" title="설정"><i class="fa-solid fa-gear"></i></button>
+        
+        <!-- Theme Dropdown Popover -->
+        <div id="theme-menu" class="theme-menu glass-card">
+          <button class="theme-menu-item" data-theme="neon"><i class="fa-solid fa-bolt"></i> Neon Dark</button>
+          <button class="theme-menu-item" data-theme="glass"><i class="fa-solid fa-wand-magic-sparkles"></i> Glassmorphic</button>
+          <button class="theme-menu-item" data-theme="neumorphic"><i class="fa-solid fa-circle-half-stroke"></i> Neumorphic</button>
+        </div>
       </div>
       <div class="header-actions">
         <label for="folder-import" class="btn btn-primary" id="import-folder-btn">

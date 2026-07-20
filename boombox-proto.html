@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Classic Boombox UI Prototype</title>
+  
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Orbitron:wght@500;700;900&family=Outfit:wght@300;400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <link rel="stylesheet" href="./boombox-proto.css">
+</head>
+<body>
+
+  <!-- Retro wall background -->
+  <div class="street-bg">
+    <div class="shadow-overlay"></div>
+  </div>
+
+  <div class="proto-container">
+    
+    <!-- Navigation Back Link -->
+    <header class="proto-top-nav">
+      <a href="index.html" class="btn-back">
+        <i class="fa-solid fa-arrow-left"></i> Main MP
+      </a>
+      <span class="proto-badge">BOOMBOX PROTOTYPE</span>
+    </header>
+
+    <!-- Main Boombox Chassis -->
+    <main class="boombox-chassis">
+      
+      <!-- Top Section: Brand Info & Knobs -->
+      <section class="bb-top-panel">
+        <div class="bb-brand-area">
+          <h1 class="bb-brand">BOOMBOX UI</h1>
+          <p class="bb-subbrand">STEREO CASSETTE RECORDER MODEL BB-89</p>
+        </div>
+        
+        <!-- Metal Knobs -->
+        <div class="bb-knobs-row">
+          <div class="bb-knob-container">
+            <span class="knob-label">VOLUME</span>
+            <div class="bb-dial-knob" id="knob-volume" style="transform: rotate(0deg);">
+              <div class="dial-marker"></div>
+            </div>
+            <div class="dial-numbers">0<span>5</span>10</div>
+          </div>
+          <div class="bb-knob-container">
+            <span class="knob-label">BALANCE</span>
+            <div class="bb-dial-knob" id="knob-balance" style="transform: rotate(0deg);">
+              <div class="dial-marker"></div>
+            </div>
+            <div class="dial-numbers">L<span>C</span>R</div>
+          </div>
+          <div class="bb-knob-container">
+            <span class="knob-label">MIC MIX</span>
+            <div class="bb-dial-knob" id="knob-mic" style="transform: rotate(0deg);">
+              <div class="dial-marker"></div>
+            </div>
+            <div class="dial-numbers">0<span>5</span>10</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Level Meters & LCD counter -->
+      <section class="bb-meter-panel">
+        
+        <!-- Dual Horizontal Red LED Level Meter -->
+        <div class="bb-led-meters">
+          <div class="meter-channel">
+            <span class="channel-label">LEFT</span>
+            <div class="led-bar-horizontal" id="meter-left">
+              <!-- Render 12 LED dots -->
+              <span class="led-dot green"></span>
+              <span class="led-dot green"></span>
+              <span class="led-dot green"></span>
+              <span class="led-dot green"></span>
+              <span class="led-dot green"></span>
+              <span class="led-dot orange"></span>
+              <span class="led-dot orange"></span>
+              <span class="led-dot orange"></span>
+              <span class="led-dot orange"></span>
+              <span class="led-dot red"></span>
+              <span class="led-dot red"></span>
+              <span class="led-dot red"></span>
+            </div>
+          </div>
+          <div class="meter-channel" style="margin-top: 6px;">
+            <span class="channel-label">RIGHT</span>
+            <div class="led-bar-horizontal" id="meter-right">
+              <span class="led-dot green"></span>
+              <span class="led-dot green"></span>
+              <span class="led-dot green"></span>
+              <span class="led-dot green"></span>
+              <span class="led-dot green"></span>
+              <span class="led-dot orange"></span>
+              <span class="led-dot orange"></span>
+              <span class="led-dot orange"></span>
+              <span class="led-dot orange"></span>
+              <span class="led-dot red"></span>
+              <span class="led-dot red"></span>
+              <span class="led-dot red"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- LCD Tape Counter -->
+        <div class="bb-counter-box">
+          <span class="counter-tag">LCD COUNTER</span>
+          <div class="counter-lcd" id="counter-lcd-display">00:00</div>
+          <button class="counter-reset-btn" id="btn-counter-reset" title="카운터 리셋">RESET</button>
+        </div>
+
+      </section>
+
+      <!-- Center Deck & Speakers section -->
+      <section class="bb-middle-deck">
+        
+        <!-- Left Speaker inner curve -->
+        <div class="speaker-grille left-speaker">
+          <div class="speaker-cone"></div>
+          <div class="speaker-edge"></div>
+        </div>
+
+        <!-- Cassette Deck Window -->
+        <div class="cassette-deck-compartment">
+          <div class="deck-frame-decal">DECK B</div>
+          
+          <div class="glass-door-holder" id="cassette-door">
+            <div class="glass-reflection-line"></div>
+            
+            <!-- Cassette Tape Object -->
+            <div class="cassette-tape" id="cassette-tape-object">
+              
+              <!-- Yellow and Red label stickers -->
+              <div class="cassette-label-skin">
+                <div class="label-a-badge">A</div>
+                <div class="label-write-area" id="cassette-label-text">Summer Hits 89</div>
+                <div class="label-info-text">METAL/CrO2/NORM - 90</div>
+              </div>
+
+              <!-- Reels & Central Window -->
+              <div class="cassette-gears-row">
+                
+                <!-- Left Reel Gear -->
+                <div class="gear-spindle" id="gear-left">
+                  <svg viewBox="0 0 100 100" class="spindle-gear-svg">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#262626" stroke-width="4"/>
+                    <circle cx="50" cy="50" r="28" fill="#171717" />
+                    <!-- Teeth -->
+                    <g fill="#a3a3a3">
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(0, 50, 50)" />
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(60, 50, 50)" />
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(120, 50, 50)" />
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(180, 50, 50)" />
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(240, 50, 50)" />
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(300, 50, 50)" />
+                    </g>
+                    <circle cx="50" cy="50" r="12" fill="#0d0d0d" />
+                  </svg>
+                  <div class="tape-roll-wound" id="wound-left" style="width: 76px; height: 76px;"></div>
+                </div>
+
+                <!-- Window -->
+                <div class="tape-view-glass">
+                  <div class="screws s-tl"></div>
+                  <div class="screws s-tr"></div>
+                  <div class="screws s-bl"></div>
+                  <div class="screws s-br"></div>
+                </div>
+
+                <!-- Right Reel Gear -->
+                <div class="gear-spindle" id="gear-right">
+                  <svg viewBox="0 0 100 100" class="spindle-gear-svg">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#262626" stroke-width="4"/>
+                    <circle cx="50" cy="50" r="28" fill="#171717" />
+                    <g fill="#a3a3a3">
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(0, 50, 50)" />
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(60, 50, 50)" />
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(120, 50, 50)" />
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(180, 50, 50)" />
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(240, 50, 50)" />
+                      <rect x="47" y="10" width="6" height="15" rx="1.5" transform="rotate(300, 50, 50)" />
+                    </g>
+                    <circle cx="50" cy="50" r="12" fill="#0d0d0d" />
+                  </svg>
+                  <div class="tape-roll-wound" id="wound-right" style="width: 38px; height: 38px;"></div>
+                </div>
+
+              </div>
+
+              <!-- Brand Decal on cassette -->
+              <div class="tape-maxell-logo">maxell <span class="maxell-red">XLI-S 90</span></div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right Speaker inner curve -->
+        <div class="speaker-grille right-speaker">
+          <div class="speaker-cone"></div>
+          <div class="speaker-edge"></div>
+        </div>
+
+      </section>
+
+      <!-- Knobs, Sliders & Track Title HUD -->
+      <section class="bb-hud-panel">
+        
+        <!-- Track title scroller -->
+        <div class="bb-hud-title-screen">
+          <div class="hud-scroller">
+            <span id="hud-track-info">곡을 업로드 해주세요 (아래 업로드 버튼 클릭)</span>
+          </div>
+        </div>
+
+        <div class="bb-sliders-row">
+          <!-- BASS slider -->
+          <div class="bb-slider-container">
+            <span class="slider-tag">BASS</span>
+            <div class="bb-fader-slot">
+              <input type="range" id="slider-bass" min="-10" max="10" value="3" class="bb-vertical-range">
+              <div class="bb-fader-handle" id="handle-bass"></div>
+            </div>
+            <div class="fader-scale">+10<span>0</span>-10</div>
+          </div>
+          
+          <!-- TREBLE slider -->
+          <div class="bb-slider-container">
+            <span class="slider-tag">TREBLE</span>
+            <div class="bb-fader-slot">
+              <input type="range" id="slider-treble" min="-10" max="10" value="0" class="bb-vertical-range">
+              <div class="bb-fader-handle" id="handle-treble"></div>
+            </div>
+            <div class="fader-scale">+10<span>0</span>-10</div>
+          </div>
+
+          <!-- Function switch toggle -->
+          <div class="bb-toggle-selector">
+            <span class="slider-tag">FUNCTION</span>
+            <div class="bb-switch-box">
+              <div class="bb-switch-rail" id="switch-function">
+                <div class="bb-switch-handle position-tape" id="function-handle"></div>
+                <div class="rail-clicks">
+                  <span data-pos="0">RADIO</span>
+                  <span data-pos="1">TAPE</span>
+                  <span data-pos="2">LINE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </section>
+
+      <!-- Upload Trigger Zone (styled like 1/4" input port) -->
+      <div class="bb-port-row">
+        <div class="jack-input-port" id="port-upload-trigger">
+          <div class="jack-hole"></div>
+          <span class="jack-label">MIC INPUT / UPLOAD TRACK</span>
+        </div>
+        <input type="file" id="boombox-file-input" accept="audio/*" multiple style="display: none;">
+      </div>
+
+      <!-- Mechanical Buttons Deck at the bottom -->
+      <section class="bb-keyboard-deck">
+        
+        <!-- RECORD button (Red cap) -->
+        <button class="bb-key btn-record" id="key-record" title="녹음 (더미)">
+          <div class="key-top"><span class="red-dot"></span></div>
+          <span class="key-label">RECORD</span>
+        </button>
+
+        <!-- PLAY button -->
+        <button class="bb-key btn-play-pause" id="key-play" title="재생/일시정지">
+          <div class="key-top"><i class="fa-solid fa-play"></i></div>
+          <span class="key-label">PLAY</span>
+        </button>
+
+        <!-- REW button -->
+        <button class="bb-key" id="key-rew" title="되감기">
+          <div class="key-top"><i class="fa-solid fa-backward"></i></div>
+          <span class="key-label">REW</span>
+        </button>
+
+        <!-- FF button -->
+        <button class="bb-key" id="key-ff" title="빨리감기">
+          <div class="key-top"><i class="fa-solid fa-forward"></i></div>
+          <span class="key-label">F.FWD</span>
+        </button>
+
+        <!-- STOP / EJECT button -->
+        <button class="bb-key" id="key-stop-eject" title="정지 / 음원 꺼내기">
+          <div class="key-top"><i class="fa-solid fa-square-eject"></i><i class="fa-solid fa-square"></i>/<i class="fa-solid fa-eject"></i></div>
+          <span class="key-label">STOP/EJECT</span>
+        </button>
+
+      </section>
+
+      <!-- Headphone Jack socket at the bottom edge -->
+      <div class="bb-bottom-jack">
+        <div class="headphone-socket">
+          <div class="socket-inner"></div>
+        </div>
+        <span class="socket-text">PHONES 1/4"</span>
+      </div>
+
+    </main>
+
+    <!-- Sidebar for uploaded files -->
+    <aside class="bb-playlist-drawer">
+      <h2>BOOMBOX TAPE PLAYLIST</h2>
+      <ul class="bb-list" id="bb-track-list">
+        <li class="empty-msg">오른쪽 테크의 'MIC INPUT / UPLOAD' 혹은 단자를 클릭해 음원을 가져오세요.</li>
+      </ul>
+    </aside>
+
+  </div>
+
+  <audio id="bb-audio" style="display: none;"></audio>
+
+  <!-- Prototype Javascript -->
+  <script type="module" src="./boombox-proto.js"></script>
+</body>
+</html>
