@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '4.0'; // Major UI & UX Upgrade Release
+const APP_VERSION = '4.1'; // Lock screen sync & reordering optimization release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -736,9 +736,29 @@ function applyTheme(themeName) {
     item.classList.toggle('active', item.dataset.theme === themeName);
   });
   
+  // Update central artwork placeholder
+  const playerArt = document.getElementById('player-art');
+  if (playerArt) {
+    playerArt.src = `/icon-${themeName}.png`;
+  }
+
+  // Update dynamic head links for PWA install custom icons
+  const touchIcon = document.getElementById('apple-touch-icon');
+  const manifestLink = document.getElementById('pwa-manifest');
+  if (touchIcon) touchIcon.href = `/icon-${themeName}.png`;
+  if (manifestLink) manifestLink.href = `/manifest-${themeName}.json`;
+  
   updateThemeToggleIcon(themeName);
   localStorage.setItem('mp-theme', themeName);
   themeMenu.classList.remove('active');
+  
+  // Sync the Lock Screen/Dynamic Island background artwork to matching theme icon
+  if (state.currentIndex >= 0 && state.currentTrackList.length > 0) {
+    const currentTrack = state.currentTrackList[state.currentIndex];
+    if (currentTrack) {
+      updateMediaSessionMetadata(currentTrack);
+    }
+  }
 }
 
 function updateThemeToggleIcon(themeName) {
@@ -817,13 +837,15 @@ function setupMediaSession() {
 
 function updateMediaSessionMetadata(track) {
   if ('mediaSession' in navigator) {
+    const themeName = localStorage.getItem('mp-theme') || 'neon';
+    const artworkSrc = `/icon-${themeName}.png`;
+    
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
       artist: track.artist,
       album: 'MP Local Library',
       artwork: [
-        { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-        { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }
+        { src: artworkSrc, sizes: '512x512', type: 'image/png' }
       ]
     });
 
@@ -872,6 +894,32 @@ function setupAudioListeners() {
   audio.addEventListener('loadedmetadata', () => {
     timeTotal.textContent = formatTime(audio.duration);
     updateMediaSessionPositionState();
+    
+    // Sync metadata again after Safari loads the new Blob URL source
+    if (state.currentIndex >= 0 && state.currentTrackList.length > 0) {
+      const currentTrack = state.currentTrackList[state.currentIndex];
+      if (currentTrack) {
+        updateMediaSessionMetadata(currentTrack);
+      }
+    }
+  });
+
+  audio.addEventListener('play', () => {
+    if (state.currentIndex >= 0 && state.currentTrackList.length > 0) {
+      const currentTrack = state.currentTrackList[state.currentIndex];
+      if (currentTrack) {
+        updateMediaSessionMetadata(currentTrack);
+      }
+    }
+  });
+
+  audio.addEventListener('playing', () => {
+    if (state.currentIndex >= 0 && state.currentTrackList.length > 0) {
+      const currentTrack = state.currentTrackList[state.currentIndex];
+      if (currentTrack) {
+        updateMediaSessionMetadata(currentTrack);
+      }
+    }
   });
 }
 
@@ -1313,6 +1361,7 @@ function setupLibraryReordering() {
   let longPressTimer = null;
   let startY = 0;
   let currentY = 0;
+  let trackItemsBoundaries = [];
   
   libraryList.addEventListener('touchstart', (e) => {
     if (state.activeView !== 'view-library') return;
@@ -1332,10 +1381,22 @@ function setupLibraryReordering() {
       draggedLi = li;
       draggedLi.classList.add('sorting');
       
-      // Trigger slight haptic tick if supported
+      // Tactile double click vibration tick (드득)
       if ('vibrate' in navigator) {
-        navigator.vibrate(15);
+        navigator.vibrate([15, 35, 15]);
       }
+      
+      // Pre-calculate positions of all items
+      const items = Array.from(libraryList.querySelectorAll('.track-item'));
+      trackItemsBoundaries = items.map(item => {
+        const rect = item.getBoundingClientRect();
+        return {
+          element: item,
+          top: rect.top + window.scrollY,
+          bottom: rect.bottom + window.scrollY,
+          centerY: rect.top + window.scrollY + rect.height / 2
+        };
+      });
     }, 450); // 450ms long-press
   }, { passive: true });
   
@@ -1359,21 +1420,33 @@ function setupLibraryReordering() {
     draggedLi.style.transform = `translateY(${deltaY}px) scale(1.02)`;
     draggedLi.style.zIndex = '1000';
     
-    // Find hover target list item
-    const clientX = touch.clientX;
-    const clientY = touch.clientY;
-    const element = document.elementFromPoint(clientX, clientY);
+    // High-performance boundary 대조
+    const currentFingerY = touch.clientY + window.scrollY;
     
-    if (element) {
-      const targetLi = element.closest('#library-list > .track-item');
-      if (targetLi && targetLi !== draggedLi) {
-        const rect = targetLi.getBoundingClientRect();
-        const next = (clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+    for (let i = 0; i < trackItemsBoundaries.length; i++) {
+      const boundary = trackItemsBoundaries[i];
+      if (boundary.element === draggedLi) continue;
+      
+      if (Math.abs(currentFingerY - boundary.centerY) < (boundary.bottom - boundary.top) / 2) {
+        const isBefore = currentFingerY < boundary.centerY;
         
-        libraryList.insertBefore(draggedLi, next ? targetLi.nextSibling : targetLi);
+        libraryList.insertBefore(draggedLi, isBefore ? boundary.element : boundary.element.nextSibling);
+        
+        // Re-calculate boundaries since DOM swapped
+        const items = Array.from(libraryList.querySelectorAll('.track-item'));
+        trackItemsBoundaries = items.map(item => {
+          const rect = item.getBoundingClientRect();
+          return {
+            element: item,
+            top: rect.top + window.scrollY,
+            bottom: rect.bottom + window.scrollY,
+            centerY: rect.top + window.scrollY + rect.height / 2
+          };
+        });
         
         startY = touch.pageY; // Re-align Y anchor
         draggedLi.style.transform = 'translateY(0) scale(1.02)';
+        break;
       }
     }
   }, { passive: false });

@@ -1,0 +1,18 @@
+{
+  "short_name": "MP Neumorphic",
+  "name": "Music Player (Neumorphic)",
+  "description": "Premium Offline Lossless Music Player for iOS & Mac",
+  "icons": [
+    {
+      "src": "icon-neumorphic.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "background_color": "#e6eef8",
+  "theme_color": "#e6eef8",
+  "display": "standalone",
+  "orientation": "portrait"
+}

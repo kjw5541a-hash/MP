@@ -1,0 +1,18 @@
+{
+  "short_name": "MP Neon",
+  "name": "Music Player (Neon)",
+  "description": "Premium Offline Lossless Music Player for iOS & Mac",
+  "icons": [
+    {
+      "src": "icon-neon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "background_color": "#0d0e15",
+  "theme_color": "#181a26",
+  "display": "standalone",
+  "orientation": "portrait"
+}

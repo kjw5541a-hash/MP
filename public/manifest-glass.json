@@ -1,0 +1,18 @@
+{
+  "short_name": "MP Glass",
+  "name": "Music Player (Glass)",
+  "description": "Premium Offline Lossless Music Player for iOS & Mac",
+  "icons": [
+    {
+      "src": "icon-glass.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "background_color": "#0a0b10",
+  "theme_color": "#0d0e15",
+  "display": "standalone",
+  "orientation": "portrait"
+}

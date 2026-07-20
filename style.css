@@ -878,22 +878,24 @@ body {
   color: var(--text-muted);
 }
 
-/* Theme Toggle Button Styles */
-.theme-toggle-btn {
+/* Header Shared Action Buttons */
+.header-btn {
   font-size: 16px;
   color: var(--text-muted);
-  margin-left: 8px;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border-color);
   background: var(--panel-bg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
 }
 
-.theme-toggle-btn:active {
+.header-btn:active {
   transform: scale(0.9) rotate(15deg);
   color: var(--primary-color);
   border-color: var(--primary-color);
@@ -984,7 +986,7 @@ body.theme-glass .btn:active {
 
 /* Glass circular icons */
 body.theme-glass .btn-icon,
-body.theme-glass .theme-toggle-btn {
+body.theme-glass .header-btn {
   background: rgba(255, 255, 255, 0.06) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
@@ -1296,7 +1298,8 @@ body.theme-neumorphic .btn-primary:active {
 }
 
 /* Circle Icon Buttons (Top header buttons, settings, close buttons) */
-body.theme-neumorphic .btn-icon {
+body.theme-neumorphic .btn-icon,
+body.theme-neumorphic .header-btn {
   background: #e6eef8 !important;
   border: 1px solid rgba(255, 255, 255, 0.8) !important;
   box-shadow: 4px 4px 8px #c8d2e6, -4px -4px 8px #ffffff !important;
@@ -1309,7 +1312,8 @@ body.theme-neumorphic .btn-icon {
   justify-content: center;
 }
 
-body.theme-neumorphic .btn-icon:active {
+body.theme-neumorphic .btn-icon:active,
+body.theme-neumorphic .header-btn:active {
   box-shadow: inset 3px 3px 6px #c8d2e6, inset -3px -3px 6px #ffffff !important;
 }
 
