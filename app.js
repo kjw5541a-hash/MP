@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '4.1'; // Lock screen sync & reordering optimization release
+const APP_VERSION = '4.2'; // Lock screen play interrupt fix & neighbor swap sorting release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -1361,7 +1361,6 @@ function setupLibraryReordering() {
   let longPressTimer = null;
   let startY = 0;
   let currentY = 0;
-  let trackItemsBoundaries = [];
   
   libraryList.addEventListener('touchstart', (e) => {
     if (state.activeView !== 'view-library') return;
@@ -1370,7 +1369,7 @@ function setupLibraryReordering() {
     const li = e.target.closest('#library-list > .track-item');
     if (!li) return;
     
-    // Skip if clicking action buttons or target is input
+    // Skip if clicking action buttons or target is input/button
     if (e.target.closest('.track-item-actions') || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
     
     const touch = e.touches[0];
@@ -1385,20 +1384,8 @@ function setupLibraryReordering() {
       if ('vibrate' in navigator) {
         navigator.vibrate([15, 35, 15]);
       }
-      
-      // Pre-calculate positions of all items
-      const items = Array.from(libraryList.querySelectorAll('.track-item'));
-      trackItemsBoundaries = items.map(item => {
-        const rect = item.getBoundingClientRect();
-        return {
-          element: item,
-          top: rect.top + window.scrollY,
-          bottom: rect.bottom + window.scrollY,
-          centerY: rect.top + window.scrollY + rect.height / 2
-        };
-      });
     }, 450); // 450ms long-press
-  }, { passive: true });
+  }, { passive: false });
   
   libraryList.addEventListener('touchmove', (e) => {
     const touch = e.touches[0];
@@ -1412,7 +1399,7 @@ function setupLibraryReordering() {
       return;
     }
     
-    e.preventDefault(); // Prevent screen scroll
+    e.preventDefault(); // Prevent standard browser scroll
     currentY = touch.pageY;
     const deltaY = currentY - startY;
     
@@ -1420,33 +1407,35 @@ function setupLibraryReordering() {
     draggedLi.style.transform = `translateY(${deltaY}px) scale(1.02)`;
     draggedLi.style.zIndex = '1000';
     
-    // High-performance boundary 대조
-    const currentFingerY = touch.clientY + window.scrollY;
+    const items = Array.from(libraryList.querySelectorAll('.track-item'));
+    const draggedIndex = items.indexOf(draggedLi);
     
-    for (let i = 0; i < trackItemsBoundaries.length; i++) {
-      const boundary = trackItemsBoundaries[i];
-      if (boundary.element === draggedLi) continue;
-      
-      if (Math.abs(currentFingerY - boundary.centerY) < (boundary.bottom - boundary.top) / 2) {
-        const isBefore = currentFingerY < boundary.centerY;
-        
-        libraryList.insertBefore(draggedLi, isBefore ? boundary.element : boundary.element.nextSibling);
-        
-        // Re-calculate boundaries since DOM swapped
-        const items = Array.from(libraryList.querySelectorAll('.track-item'));
-        trackItemsBoundaries = items.map(item => {
-          const rect = item.getBoundingClientRect();
-          return {
-            element: item,
-            top: rect.top + window.scrollY,
-            bottom: rect.bottom + window.scrollY,
-            centerY: rect.top + window.scrollY + rect.height / 2
-          };
-        });
-        
+    const prevLi = items[draggedIndex - 1];
+    const nextLi = items[draggedIndex + 1];
+    
+    const clientY = touch.clientY;
+    
+    // Swap up with immediate neighbor
+    if (prevLi) {
+      const rect = prevLi.getBoundingClientRect();
+      const prevMidY = rect.top + rect.height / 2;
+      if (clientY < prevMidY) {
+        libraryList.insertBefore(draggedLi, prevLi);
         startY = touch.pageY; // Re-align Y anchor
         draggedLi.style.transform = 'translateY(0) scale(1.02)';
-        break;
+        return;
+      }
+    }
+    
+    // Swap down with immediate neighbor
+    if (nextLi) {
+      const rect = nextLi.getBoundingClientRect();
+      const nextMidY = rect.top + rect.height / 2;
+      if (clientY > nextMidY) {
+        libraryList.insertBefore(draggedLi, nextLi.nextSibling);
+        startY = touch.pageY; // Re-align Y anchor
+        draggedLi.style.transform = 'translateY(0) scale(1.02)';
+        return;
       }
     }
   }, { passive: false });
