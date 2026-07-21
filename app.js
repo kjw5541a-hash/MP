@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '4.4'; // Mini player & neumorphism click feedback release
+const APP_VERSION = '4.5'; // Mini player position swap & player-view hide release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -460,8 +460,16 @@ function loadTrackMetadata(track) {
     miniTitle.textContent = track.title;
     miniArtist.textContent = track.artist;
   }
+  updateMiniPlayerVisibility();
+}
+
+function updateMiniPlayerVisibility() {
   if (miniPlayer) {
-    miniPlayer.classList.add('active');
+    if (state.hasLoadedTrack && state.activeView !== 'view-player') {
+      miniPlayer.classList.add('active');
+    } else {
+      miniPlayer.classList.remove('active');
+    }
   }
 }
 
@@ -999,6 +1007,8 @@ function setupEventListeners() {
       if (targetView !== 'view-playlists') {
         playlistDetailSubview.classList.remove('active');
       }
+
+      updateMiniPlayerVisibility();
     });
   });
 

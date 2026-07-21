@@ -710,7 +710,7 @@ body {
 /* --- BOTTOM NAV BAR --- */
 .app-nav {
   position: fixed;
-  bottom: calc(76px + var(--safe-bottom));
+  bottom: calc(12px + var(--safe-bottom));
   left: 12px;
   right: 12px;
   width: calc(100% - 24px);
@@ -1406,7 +1406,7 @@ body.theme-neumorphic .settings-card small {
 /* --- MINI PLAYER FLOATING BAR --- */
 .mini-player {
   position: fixed;
-  bottom: calc(12px + var(--safe-bottom));
+  bottom: calc(84px + var(--safe-bottom));
   left: 12px;
   right: 12px;
   width: calc(100% - 24px);
