@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '4.3'; // Lock screen play/pause sync, metadata title sync, similar songs return fix
+const APP_VERSION = '4.4'; // Mini player & neumorphism click feedback release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -123,6 +123,14 @@ const youtubeResultsList = document.getElementById('youtube-results-list');
 const btnGetSimilar = document.getElementById('btn-get-similar');
 const similarStatus = document.getElementById('similar-status');
 const similarResultsList = document.getElementById('similar-results-list');
+
+// Mini Player Elements
+const miniPlayer = document.getElementById('mini-player');
+const miniTitle = document.getElementById('mini-title');
+const miniArtist = document.getElementById('mini-artist');
+const btnMiniPlay = document.getElementById('mini-play');
+const btnMiniPrev = document.getElementById('mini-prev');
+const btnMiniNext = document.getElementById('mini-next');
 
 // --- PWA SERVICE WORKER REGISTRATION ---
 if ('serviceWorker' in navigator) {
@@ -446,6 +454,15 @@ function loadTrackMetadata(track) {
     similarCurrentTitle.textContent = track.title;
     similarCurrentArtist.textContent = track.artist;
   }
+
+  // Update Mini Player details
+  if (miniTitle && miniArtist) {
+    miniTitle.textContent = track.title;
+    miniArtist.textContent = track.artist;
+  }
+  if (miniPlayer) {
+    miniPlayer.classList.add('active');
+  }
 }
 
 function playTrack(track, trackList, index) {
@@ -617,8 +634,10 @@ function updatePlayerFavoriteButton() {
 function updatePlayButtonUI() {
   if (state.isPlaying) {
     btnPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
+    if (btnMiniPlay) btnMiniPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
   } else {
     btnPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
+    if (btnMiniPlay) btnMiniPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
   }
 }
 
@@ -990,6 +1009,11 @@ function setupEventListeners() {
   btnPlay.addEventListener('click', togglePlay);
   btnNext.addEventListener('click', nextTrack);
   btnPrev.addEventListener('click', prevTrack);
+
+  // Mini Player Controls
+  if (btnMiniPlay) btnMiniPlay.addEventListener('click', togglePlay);
+  if (btnMiniPrev) btnMiniPrev.addEventListener('click', prevTrack);
+  if (btnMiniNext) btnMiniNext.addEventListener('click', nextTrack);
 
   seekSlider.addEventListener('input', (e) => {
     if (!audio.duration) return;
