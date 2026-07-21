@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '4.5'; // Mini player position swap & player-view hide release
+const APP_VERSION = '4.6'; // Remove player-wrapper card styling in neumorphic theme release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
