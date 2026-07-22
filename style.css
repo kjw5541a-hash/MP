@@ -114,12 +114,13 @@ body {
 }
 
 .logo-text {
-  font-size: 22px;
+  font-size: 1.25rem;
   font-weight: 800;
-  letter-spacing: 0.5px;
-  background: linear-gradient(135deg, #fff 40%, var(--accent-color) 100%);
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #ffffff 30%, #38bdf8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 
 /* Buttons */
@@ -1195,8 +1196,15 @@ body.theme-neumorphic .app-header {
 }
 
 body.theme-neumorphic .logo-text {
-  color: #3d495c;
-  text-shadow: none;
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: #2c3e50 !important;
+  color: #2c3e50 !important;
+  font-weight: 800 !important;
+  font-size: 1.25rem !important;
+  letter-spacing: -0.5px !important;
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.9), -1px -1px 1px rgba(0, 0, 0, 0.1) !important;
+  filter: none !important;
 }
 
 body.theme-neumorphic .app-nav {
@@ -1218,6 +1226,33 @@ body.theme-neumorphic .nav-item.active {
   background: #e6eef8 !important;
   box-shadow: inset 4px 4px 8px #c8d2e6, inset -4px -4px 8px #ffffff !important;
   border-radius: 12px;
+}
+
+/* Neumorphic Theme Primary & Secondary Buttons (Similar Songs Tab) */
+body.theme-neumorphic .btn-primary {
+  background: #e6eef8 !important;
+  color: #2563eb !important;
+  box-shadow: 4px 4px 10px #c8d2e6, -4px -4px 10px #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+body.theme-neumorphic .btn-primary:active {
+  box-shadow: inset 3px 3px 6px #c8d2e6, inset -3px -3px 6px #ffffff !important;
+  transform: translateY(1px) scale(0.97) !important;
+}
+
+body.theme-neumorphic .btn-secondary,
+body.theme-neumorphic .btn-search-recommend {
+  background: #e6eef8 !important;
+  color: #334155 !important;
+  box-shadow: 3px 3px 6px #c8d2e6, -3px -3px 6px #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+}
+
+body.theme-neumorphic .btn-secondary:active,
+body.theme-neumorphic .btn-search-recommend:active {
+  box-shadow: inset 2px 2px 4px #c8d2e6, inset -2px -2px 4px #ffffff !important;
+  transform: translateY(1px) scale(0.96) !important;
 }
 
 /* Neumorphic Soft Bulging Cards */

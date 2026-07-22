@@ -2,7 +2,7 @@ import * as db from './db.js';
 import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '5.3'; // Revert swipe delete & dedicated lyrics scroll release
+const APP_VERSION = '5.4'; // Lyrics check on tap, logo visibility, portrait orientation, theme button release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -1214,23 +1214,46 @@ function setupEventListeners() {
     }
   });
 
-  // Album Art 3D Flip Card Toggle (Front image & Back footer return button)
-  const flipCardFront = document.querySelector('.flip-card-front');
-  const lyricsFooter = document.querySelector('.lyrics-footer');
+  // Album Art 3D Flip Card Toggle (Check lyrics existence before flip)
+  const playerArtContainer = document.getElementById('player-art-container');
   const playerArtFlip = document.getElementById('player-art-flip');
+  const playerLyricsText = document.getElementById('player-lyrics-text');
 
-  if (flipCardFront && playerArtFlip) {
-    flipCardFront.addEventListener('click', (e) => {
-      e.stopPropagation();
-      playerArtFlip.classList.add('flipped');
+  if (playerArtContainer && playerArtFlip) {
+    playerArtContainer.addEventListener('click', (e) => {
+      // If clicking inside lyrics text box while flipped, allow touch scrolling without flipping back
+      if (playerArtFlip.classList.contains('flipped') && e.target.closest('#player-lyrics-text')) {
+        return;
+      }
+
+      // If already flipped to back, clicking anywhere outside lyrics body flips back to cover
+      if (playerArtFlip.classList.contains('flipped')) {
+        playerArtFlip.classList.remove('flipped');
+        return;
+      }
+
+      // Front side: Check if current track has lyrics before flipping
+      if (state.currentIndex >= 0 && state.currentTrackList[state.currentIndex]) {
+        const currentTrack = state.currentTrackList[state.currentIndex];
+        if (currentTrack.lyrics && currentTrack.lyrics.trim().length > 0) {
+          playerArtFlip.classList.add('flipped');
+        } else {
+          alert('현재 재생 중인 곡에 등록된 가사가 없습니다.');
+        }
+      } else {
+        alert('재생 중인 곡이 없습니다. 보관함에서 노래를 먼저 재생해 주세요.');
+      }
     });
   }
 
-  if (lyricsFooter && playerArtFlip) {
-    lyricsFooter.addEventListener('click', (e) => {
+  // Prevent touchmove inside lyrics text box from bubbling up
+  if (playerLyricsText) {
+    playerLyricsText.addEventListener('touchstart', (e) => {
       e.stopPropagation();
-      playerArtFlip.classList.remove('flipped');
-    });
+    }, { passive: true });
+    playerLyricsText.addEventListener('touchmove', (e) => {
+      e.stopPropagation();
+    }, { passive: true });
   }
 
   btnFavorite.addEventListener('click', async () => {
