@@ -1,7 +1,8 @@
 import * as db from './db.js';
+import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '4.7'; // Always visible mini player for library, playlists, favorites release
+const APP_VERSION = '5.0'; // Cover art extraction, 3D lyrics flip, library thumbnails, neumorphic favorite fix release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -115,11 +116,6 @@ const settingsGeminiKey = document.getElementById('settings-gemini-key');
 const settingsShortcutName = document.getElementById('settings-shortcut-name');
 const settingsSaveBtn = document.getElementById('settings-save-btn');
 
-const youtubeSearchInput = document.getElementById('youtube-search-input');
-const youtubeSearchBtn = document.getElementById('youtube-search-btn');
-const youtubeSearchStatus = document.getElementById('youtube-search-status');
-const youtubeResultsList = document.getElementById('youtube-results-list');
-
 const btnGetSimilar = document.getElementById('btn-get-similar');
 const similarStatus = document.getElementById('similar-status');
 const similarResultsList = document.getElementById('similar-results-list');
@@ -167,6 +163,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization error:', error);
   }
 });
+
+// --- AUDIO METADATA & COVER HELPERS ---
+function getTrackCoverHTML(track) {
+  if (track && track.coverUrl) {
+    return `<img src="${track.coverUrl}" alt="Cover" class="track-item-cover">`;
+  }
+  return `<div class="track-item-icon-placeholder"><i class="fa-solid fa-music"></i></div>`;
+}
+
+function readAudioMetadata(file) {
+  return new Promise((resolve) => {
+    try {
+      jsmediatags.read(file, {
+        onSuccess: (tag) => {
+          const tags = tag.tags || {};
+          let coverUrl = null;
+          let lyrics = '';
+          let title = tags.title ? tags.title.trim() : null;
+          let artist = tags.artist ? tags.artist.trim() : null;
+
+          if (tags.picture) {
+            try {
+              const { data, format } = tags.picture;
+              let base64String = '';
+              const chunkSize = 8192;
+              for (let i = 0; i < data.length; i += chunkSize) {
+                const subArray = data.subarray ? data.subarray(i, i + chunkSize) : data.slice(i, i + chunkSize);
+                base64String += String.fromCharCode.apply(null, subArray);
+              }
+              coverUrl = `data:${format || 'image/jpeg'};base64,${window.btoa(base64String)}`;
+            } catch (err) {
+              console.warn('Cover extraction error:', err);
+            }
+          }
+
+          if (tags.USLT) {
+            if (typeof tags.USLT === 'string') {
+              lyrics = tags.USLT;
+            } else if (tags.USLT.data) {
+              lyrics = typeof tags.USLT.data === 'string' ? tags.USLT.data : (tags.USLT.data.lyrics || '');
+            }
+          } else if (tags.lyrics) {
+            lyrics = typeof tags.lyrics === 'string' ? tags.lyrics : (tags.lyrics.data || '');
+          } else if (tags.ULT) {
+            lyrics = typeof tags.ULT === 'string' ? tags.ULT : (tags.ULT.data || '');
+          }
+
+          resolve({ title, artist, coverUrl, lyrics });
+        },
+        onError: (error) => {
+          console.warn('jsmediatags read error:', error);
+          resolve({ title: null, artist: null, coverUrl: null, lyrics: '' });
+        }
+      });
+    } catch (err) {
+      console.warn('Metadata parsing failed:', err);
+      resolve({ title: null, artist: null, coverUrl: null, lyrics: '' });
+    }
+  });
+}
 
 // --- RENDER VIEWS ---
 async function renderAllViews() {
@@ -221,7 +277,7 @@ async function renderLibrary(searchFilter = '') {
     li.className = `track-item ${state.currentIndex >= 0 && state.currentTrackList[state.currentIndex]?.id === track.id ? 'playing' : ''}`;
     
     li.innerHTML = `
-      <div class="track-item-index">${index + 1}</div>
+      ${getTrackCoverHTML(track)}
       <div class="track-item-info">
         <div class="track-item-title">${escapeHtml(track.title)}</div>
         <div class="track-item-artist">${escapeHtml(track.artist)}</div>
@@ -344,7 +400,7 @@ async function renderFavorites() {
     li.className = `track-item ${state.currentIndex >= 0 && state.currentTrackList[state.currentIndex]?.id === track.id ? 'playing' : ''}`;
     
     li.innerHTML = `
-      <div class="track-item-index">${index + 1}</div>
+      ${getTrackCoverHTML(track)}
       <div class="track-item-info">
         <div class="track-item-title">${escapeHtml(track.title)}</div>
         <div class="track-item-artist">${escapeHtml(track.artist)}</div>
@@ -414,7 +470,7 @@ async function openPlaylistDetail(playlist) {
     li.className = `track-item ${state.currentIndex >= 0 && state.currentTrackList[state.currentIndex]?.id === track.id ? 'playing' : ''}`;
     
     li.innerHTML = `
-      <div class="track-item-index">${index + 1}</div>
+      ${getTrackCoverHTML(track)}
       <div class="track-item-info">
         <div class="track-item-title">${escapeHtml(track.title)}</div>
         <div class="track-item-artist">${escapeHtml(track.artist)}</div>
@@ -460,6 +516,28 @@ function loadTrackMetadata(track) {
   seekSlider.value = 0;
   seekProgress.style.width = '0%';
   updatePlayerFavoriteButton();
+
+  // Set Album Cover Art or Fallback Theme Icon
+  const themeName = localStorage.getItem('mp-theme') || 'neon';
+  if (playerArt) {
+    if (track.coverUrl) {
+      playerArt.src = track.coverUrl;
+    } else {
+      playerArt.src = `/icon-${themeName}.png`;
+    }
+  }
+
+  // Set Embedded Lyrics
+  const playerLyricsText = document.getElementById('player-lyrics-text');
+  if (playerLyricsText) {
+    playerLyricsText.textContent = track.lyrics && track.lyrics.trim() ? track.lyrics : '등록된 가사가 없습니다.';
+  }
+
+  // Reset 3D flip card to front cover view
+  const playerArtFlip = document.getElementById('player-art-flip');
+  if (playerArtFlip) {
+    playerArtFlip.classList.remove('flipped');
+  }
 
   const similarCurrentTitle = document.getElementById('similar-current-title');
   const similarCurrentArtist = document.getElementById('similar-current-artist');
@@ -642,16 +720,13 @@ function updatePlayerFavoriteButton() {
   const currentTrack = state.currentTrackList[state.currentIndex];
   if (!currentTrack) return;
   
-  db.getAllTracks().then(tracks => {
-    const updated = tracks.find(t => t.id === currentTrack.id);
-    if (updated && updated.isFavorite) {
-      btnFavorite.classList.add('active');
-      btnFavorite.innerHTML = '<i class="fa-solid fa-heart"></i>';
-    } else {
-      btnFavorite.classList.remove('active');
-      btnFavorite.innerHTML = '<i class="fa-regular fa-heart"></i>';
-    }
-  });
+  if (currentTrack.isFavorite) {
+    btnFavorite.classList.add('active');
+    btnFavorite.innerHTML = '<i class="fa-solid fa-heart"></i>';
+  } else {
+    btnFavorite.classList.remove('active');
+    btnFavorite.innerHTML = '<i class="fa-regular fa-heart"></i>';
+  }
 }
 
 function updatePlayButtonUI() {
@@ -704,6 +779,11 @@ async function importFiles(files) {
         }
       }
 
+      // Read embedded ID3/MP4 metadata (Title, Artist, Cover Art, Lyrics)
+      const meta = await readAudioMetadata(file);
+      if (meta.title) title = meta.title;
+      if (meta.artist) artist = meta.artist;
+
       const isDuplicate = existingTracks.some(t => 
         t.title.toLowerCase() === title.toLowerCase() && 
         t.artist.toLowerCase() === artist.toLowerCase()
@@ -721,7 +801,9 @@ async function importFiles(files) {
         title,
         artist,
         duration,
-        audioBlob: file
+        audioBlob: file,
+        coverUrl: meta.coverUrl,
+        lyrics: meta.lyrics
       });
       
       const orderStr = localStorage.getItem('mp-track-order');
@@ -1125,18 +1207,26 @@ function setupEventListeners() {
     }
   });
 
+  // Album Art 3D Flip Card Toggle (Cover vs Lyrics)
+  const playerArtContainer = document.getElementById('player-art-container');
+  const playerArtFlip = document.getElementById('player-art-flip');
+  if (playerArtContainer && playerArtFlip) {
+    playerArtContainer.addEventListener('click', () => {
+      playerArtFlip.classList.toggle('flipped');
+    });
+  }
+
   btnFavorite.addEventListener('click', async () => {
     if (state.currentIndex < 0) return;
     const currentTrack = state.currentTrackList[state.currentIndex];
     if (!currentTrack) return;
     
-    const isFav = btnFavorite.classList.contains('active');
-    await db.toggleFavorite(currentTrack.id, !isFav);
-    
-    currentTrack.isFavorite = !isFav;
-    
-    await renderAllViews();
+    const newFavState = !currentTrack.isFavorite;
+    currentTrack.isFavorite = newFavState;
     updatePlayerFavoriteButton();
+    
+    await db.toggleFavorite(currentTrack.id, newFavState);
+    await renderAllViews();
   });
 
   btnPlaylistBack.addEventListener('click', () => {
@@ -1189,15 +1279,7 @@ function setupEventListeners() {
     alert('설정이 저장되었습니다.');
   });
 
-  youtubeSearchBtn.addEventListener('click', () => {
-    searchYouTubeVideos(youtubeSearchInput.value);
-  });
 
-  youtubeSearchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      searchYouTubeVideos(youtubeSearchInput.value);
-    }
-  });
 
   btnGetSimilar.addEventListener('click', () => {
     const title = document.getElementById('similar-current-title').textContent;
@@ -1267,65 +1349,7 @@ function escapeHtml(string) {
   return String(string).replace(/[&<>"']/g, (m) => map[m]);
 }
 
-// --- YOUTUBE SEARCH & DOWNLOAD INTEGRATION ---
-function searchYouTubeVideos(query) {
-  if (!query.trim()) return;
-  
-  const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-  window.open(searchUrl, '_blank');
-  
-  // Show a helper box to run the shortcut once the user copies the video URL from YouTube
-  youtubeResultsList.innerHTML = `
-    <li class="glass-card" style="text-align:center; padding:24px 20px; list-style:none; border-radius:16px; border: 1px solid var(--border-color); background: var(--panel-bg);">
-      <div style="font-size: 1rem; font-weight:700; margin-bottom: 12px; color: var(--accent-color);">
-        <i class="fa-brands fa-youtube" style="color:#ff0000; font-size: 20px; vertical-align: middle; margin-right: 4px;"></i> YouTube 검색창을 열었습니다!
-      </div>
-      <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1.6; max-width: 290px; margin: 0 auto 18px auto; text-align:left;">
-        1. 유튜브에서 음악 영상을 찾아 들어갑니다.<br>
-        2. <strong>[공유]</strong> 버튼을 누르고 <strong>[링크 복사]</strong>를 선택합니다.<br>
-        3. 아래 버튼을 눌러 음원 다운로드 단축어를 실행합니다.
-      </div>
-      <button id="btn-manual-shortcut" class="btn btn-primary" style="margin: 0 auto; width:100%; max-width: 240px; justify-content:center; border-radius: 12px; font-weight:600; padding: 12px 18px;">
-        <i class="fa-solid fa-cloud-arrow-down"></i> 복사한 주소로 다운로드 시작
-      </button>
-    </li>
-  `;
-  
-  const btnManual = document.getElementById('btn-manual-shortcut');
-  if (btnManual) {
-    btnManual.addEventListener('click', async () => {
-      try {
-        const text = await navigator.clipboard.readText();
-        if (text && (text.includes('youtube.com') || text.includes('youtu.be'))) {
-          handleDownloadVideo(text.trim());
-        } else {
-          // If clipboard doesn't contain a youtube link, alert and trigger general shortcut
-          alert('클립보드에 복사된 유튜브 주소가 없습니다. 유튜브에서 먼저 링크 복사를 해주세요.\n\n(단축어를 일단 수동 실행합니다.)');
-          handleDownloadVideo('');
-        }
-      } catch (err) {
-        // Fallback if clipboard API is blocked without permissions
-        handleDownloadVideo('');
-      }
-    });
-  }
-}
 
-async function handleDownloadVideo(videoUrl) {
-  try {
-    await navigator.clipboard.writeText(videoUrl);
-    
-    const shortcutName = localStorage.getItem('mp-shortcut-name') || '유튜브 음원 다운로드';
-    const shortcutUrl = `shortcuts://run-shortcut?name=${encodeURIComponent(shortcutName)}&input=${encodeURIComponent(videoUrl)}`;
-    
-    alert(`유튜브 주소가 클립보드에 복사되었습니다!\n\n단축어 [${shortcutName}]를 실행하기 위해 단축어 앱으로 이동합니다. 다운로드가 완료되면 보관함의 '파일' 또는 '폴더' 가져오기를 진행해 주세요.`);
-    
-    window.location.href = shortcutUrl;
-  } catch (err) {
-    console.error('Download bridge error:', err);
-    alert('클립보드 복사 또는 단축어 실행에 실패했습니다.');
-  }
-}
 
 // --- GEMINI AI RECOMMENDATIONS ---
 async function getSimilarSongs(title, artist) {
@@ -1435,23 +1459,17 @@ function renderSimilarSongs(songs) {
     li.style.marginBottom = '10px';
     li.style.borderRadius = '12px';
     
+    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(song.title + ' ' + song.artist)}`;
     li.innerHTML = `
       <div style="min-width:0; flex:1;">
         <div class="track-title" style="font-weight: 700; font-size: 0.95rem;">${escapeHtml(song.title)}</div>
         <div class="track-artist" style="font-size: 0.8rem; opacity: 0.7; margin-top: 2px;">${escapeHtml(song.artist)}</div>
         <div style="font-size: 0.75rem; opacity: 0.5; margin-top: 4px; line-height:1.3; font-style:italic;">"${escapeHtml(song.reason)}"</div>
       </div>
-      <button class="btn btn-secondary btn-search-recommend" data-query="${song.title} ${song.artist}" style="border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; display:flex; align-items:center; gap:4px; margin-left: 15px;">
+      <a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-search-recommend" style="border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; display:flex; align-items:center; gap:4px; margin-left: 15px; text-decoration: none;">
         <i class="fa-solid fa-magnifying-glass"></i> 검색
-      </button>
+      </a>
     `;
-    
-    li.querySelector('.btn-search-recommend').addEventListener('click', (e) => {
-      const searchQuery = e.currentTarget.dataset.query;
-      // Open YouTube directly without switching tabs, so the user returns to the same screen
-      const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
-      window.open(searchUrl, '_blank');
-    });
     
     similarResultsList.appendChild(li);
   });

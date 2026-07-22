@@ -57,10 +57,19 @@
       <!-- VIEW 1: NOW PLAYING -->
       <section id="view-player" class="content-view active">
         <div class="player-wrapper">
-          <!-- Album Art (Glass card) -->
-          <div class="album-art-container">
+          <!-- Album Art & Lyrics Flip Container -->
+          <div class="album-art-container" id="player-art-container" title="터치하여 가사 보기">
             <div class="album-art-glow"></div>
-            <img src="/icon-512.png" alt="Album Art" id="player-art" class="player-art">
+            <div class="flip-card-inner" id="player-art-flip">
+              <div class="flip-card-front">
+                <img src="/icon-512.png" alt="Album Art" id="player-art" class="player-art">
+              </div>
+              <div class="flip-card-back">
+                <div class="lyrics-header"><i class="fa-solid fa-align-left"></i> 가사</div>
+                <div id="player-lyrics-text" class="lyrics-body">등록된 가사가 없습니다.</div>
+                <div class="lyrics-footer"><i class="fa-solid fa-rotate-left"></i> 터치하여 커버로 돌아가기</div>
+              </div>
+            </div>
           </div>
 
           <!-- Track Info -->
@@ -165,26 +174,7 @@
         </div>
       </section>
 
-      <!-- VIEW 5: SEARCH -->
-      <section id="view-search" class="content-view">
-        <div class="view-header">
-          <h2>노래 검색 (YouTube)</h2>
-        </div>
-        <div class="search-tab-wrapper">
-          <div class="search-input-group" style="display: flex; gap: 8px; margin-bottom: 15px;">
-            <input type="text" id="youtube-search-input" class="search-bar" placeholder="노래 제목 또는 아티스트 입력..." style="flex: 1; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.05); color: var(--text-main); outline: none;">
-            <button id="youtube-search-btn" class="btn btn-primary" style="border-radius: 12px; padding: 0 20px;"><i class="fa-solid fa-magnifying-glass"></i> 검색</button>
-          </div>
-          <div class="search-status" id="youtube-search-status" style="margin: 20px 0; font-size: 0.9rem; opacity: 0.8; text-align: center; display: none;">유튜브에서 검색 중...</div>
-          <div class="search-results-container">
-            <ul id="youtube-results-list" class="track-list">
-              <!-- Search results dynamically rendered here -->
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- VIEW 6: SIMILAR RECOMMENDATIONS -->
+      <!-- VIEW 5: SIMILAR RECOMMENDATIONS -->
       <section id="view-similar" class="content-view">
         <div class="view-header">
           <h2>비슷한 노래 추천</h2>
@@ -224,10 +214,6 @@
       <button class="nav-item" data-view="view-favorites">
         <i class="fa-solid fa-heart"></i>
         <span>즐겨찾기</span>
-      </button>
-      <button class="nav-item" data-view="view-search">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <span>노래검색</span>
       </button>
       <button class="nav-item" data-view="view-similar">
         <i class="fa-solid fa-wand-magic-sparkles"></i>

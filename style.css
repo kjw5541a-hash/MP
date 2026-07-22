@@ -1558,16 +1558,153 @@ body.theme-neumorphic .btn-play:active {
 }
 
 /* Neumorphic active toggled controls (Shuffle, Repeat, Favorites) */
-body.theme-neumorphic .btn-icon.active,
-body.theme-neumorphic #ctrl-favorite.active {
+body.theme-neumorphic .btn-icon.active {
   box-shadow: inset 3.5px 3.5px 7px #b8c4d9, inset -3.5px -3.5px 7px #ffffff !important;
   color: var(--primary-color) !important;
+}
+
+body.theme-neumorphic #ctrl-favorite.active {
+  box-shadow: inset 3.5px 3.5px 7px #b8c4d9, inset -3.5px -3.5px 7px #ffffff !important;
+  color: #ef4444 !important;
+}
+
+body.theme-neumorphic #ctrl-favorite:not(.active) {
+  box-shadow: 4px 4px 8px #c8d2e6, -4px -4px 8px #ffffff !important;
+  color: var(--text-main) !important;
 }
 
 body.theme-neumorphic .header-btn.active {
   box-shadow: inset 3px 3px 6px #c8d2e6, inset -3px -3px 6px #ffffff !important;
   color: var(--primary-color) !important;
 }
+
+/* 3D Flip Card for Cover & Lyrics */
+.album-art-container {
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flip-card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 24px;
+  top: 0;
+  left: 0;
+}
+
+.flip-card-front {
+  z-index: 2;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+body.theme-neumorphic .flip-card-back {
+  background: #e6eef8 !important;
+  box-shadow: inset 4px 4px 8px #c8d2e6, inset -4px -4px 8px #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+.lyrics-header {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.lyrics-body {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--text-main);
+  text-align: center;
+  padding: 4px;
+}
+
+.lyrics-footer {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Track List Cover Thumbnails */
+.track-item-cover {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  object-fit: cover;
+  margin-right: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+body.theme-neumorphic .track-item-cover {
+  box-shadow: 2px 2px 5px #c8d2e6, -2px -2px 5px #ffffff !important;
+}
+
+.track-item-icon-placeholder {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--primary-color);
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+body.theme-neumorphic .track-item-icon-placeholder {
+  background: #e6eef8 !important;
+  box-shadow: 2px 2px 5px #c8d2e6, -2px -2px 5px #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+}
+
 
 
 

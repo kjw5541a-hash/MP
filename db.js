@@ -56,6 +56,8 @@ export async function addTrack(track) {
       artist: track.artist || 'Unknown Artist',
       duration: track.duration || 0,
       audioBlob: track.audioBlob, // Binary audio file (m4a, flac, etc.)
+      coverUrl: track.coverUrl || null, // Base64 Data URL for cover artwork
+      lyrics: track.lyrics || '', // Embedded lyrics text
       addedAt: Date.now(),
       isFavorite: false
     };
