@@ -1705,6 +1705,141 @@ body.theme-neumorphic .track-item-icon-placeholder {
   border: 1px solid rgba(255, 255, 255, 0.7) !important;
 }
 
+/* Remove purple glow in Neumorphic theme */
+body.theme-neumorphic .album-art-glow {
+  background: none !important;
+  box-shadow: 8px 8px 18px #c8d2e6, -8px -8px 18px #ffffff !important;
+  opacity: 0.8 !important;
+  filter: none !important;
+}
+
+/* Floating Settings Popover Menu */
+.settings-floating-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 220px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: none;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.settings-floating-menu.active {
+  display: block;
+  animation: fadeInDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+body.theme-neumorphic .settings-floating-menu {
+  background: #e6eef8 !important;
+  box-shadow: 6px 6px 14px #c8d2e6, -6px -6px 14px #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+.floating-menu-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary-color);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 6px;
+}
+
+.floating-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  box-sizing: border-box;
+}
+
+.floating-menu-item:hover,
+.floating-menu-item:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-neumorphic .floating-menu-item:hover,
+body.theme-neumorphic .floating-menu-item:active {
+  background: rgba(0, 0, 0, 0.04) !important;
+  box-shadow: inset 2px 2px 4px #c8d2e6, inset -2px -2px 4px #ffffff !important;
+}
+
+.floating-theme-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  margin: 4px 0;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+}
+
+body.theme-neumorphic .floating-theme-submenu {
+  background: #dce6f5 !important;
+  box-shadow: inset 2px 2px 5px #b8c4d9, inset -2px -2px 5px #ffffff !important;
+}
+
+/* Track item LTR swipe delete */
+.track-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.track-item-swipe-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: inherit;
+  position: relative;
+  z-index: 2;
+}
+
+.track-item-swipe-delete {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 65px;
+  background: #ef4444;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  z-index: 1;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.track-item.swiped-right .track-item-swipe-content {
+  transform: translateX(65px);
+}
+
+
 
 
 

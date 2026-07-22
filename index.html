@@ -31,22 +31,36 @@
     
     <!-- Top Action Bar -->
     <header class="app-header">
-      <div class="logo-area" style="position: relative;">
+      <div class="logo-area">
         <span class="logo-text" id="logo-brand">JWMusicPlayer</span>
-        <button id="theme-toggle" class="header-btn" title="테마 변경"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+      </div>
+      <div class="header-actions" style="position: relative;">
         <button id="settings-btn" class="header-btn" title="설정"><i class="fa-solid fa-gear"></i></button>
         
-        <!-- Theme Dropdown Popover -->
-        <div id="theme-menu" class="theme-menu glass-card">
-          <button class="theme-menu-item" data-theme="neon"><i class="fa-solid fa-bolt"></i> Neon Dark</button>
-          <button class="theme-menu-item" data-theme="glass"><i class="fa-solid fa-wand-magic-sparkles"></i> Glassmorphic</button>
-          <button class="theme-menu-item" data-theme="neumorphic"><i class="fa-solid fa-circle-half-stroke"></i> Neumorphic</button>
+        <!-- Floating Settings Popover Menu -->
+        <div id="settings-floating-menu" class="settings-floating-menu glass-card">
+          <div class="floating-menu-title">설정</div>
+          <button id="menu-theme-toggle" class="floating-menu-item">
+            <i class="fa-solid fa-palette" style="color: var(--primary-color);"></i>
+            <span>테마 선택</span>
+            <i class="fa-solid fa-chevron-down arrow-icon" style="margin-left: auto; font-size: 0.75rem; opacity: 0.6;"></i>
+          </button>
+          <!-- Nested Theme Options -->
+          <div id="floating-theme-submenu" class="floating-theme-submenu" style="display: none;">
+            <button class="theme-menu-item" data-theme="neon"><i class="fa-solid fa-bolt"></i> Neon Dark</button>
+            <button class="theme-menu-item" data-theme="glass"><i class="fa-solid fa-wand-magic-sparkles"></i> Glassmorphic</button>
+            <button class="theme-menu-item" data-theme="neumorphic"><i class="fa-solid fa-circle-half-stroke"></i> Neumorphic</button>
+          </div>
+          <button id="menu-api-btn" class="floating-menu-item">
+            <i class="fa-solid fa-shield-halved" style="color: #eab308;"></i>
+            <span>개인정보 (Gemini API)</span>
+          </button>
+          <label for="folder-import" class="floating-menu-item" id="menu-import-label" style="margin: 0; cursor: pointer;">
+            <i class="fa-solid fa-folder-plus" style="color: #22c55e;"></i>
+            <span>음원 추가</span>
+          </label>
         </div>
-      </div>
-      <div class="header-actions">
-        <label for="folder-import" class="header-btn" id="import-folder-btn" title="음원 폴더 가져오기">
-          <i class="fa-solid fa-folder-open"></i>
-        </label>
+
         <input type="file" id="folder-import" webkitdirectory directory multiple style="display: none;">
       </div>
     </header>
