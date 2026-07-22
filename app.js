@@ -2,7 +2,7 @@ import * as db from './db.js';
 import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '5.2'; // Event listener initialization crash fix release
+const APP_VERSION = '5.3'; // Revert swipe delete & dedicated lyrics scroll release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -233,59 +233,7 @@ async function renderAllViews() {
   ]);
 }
 
-// --- LTR SWIPE GESTURE HELPER ---
-function attachSwipeToDelete(li, track) {
-  let startX = 0;
-  let startY = 0;
-  let isHorizontal = false;
 
-  const swipeContent = li.querySelector('.track-item-swipe-content');
-  const swipeDeleteBtn = li.querySelector('.track-item-swipe-delete');
-
-  li.addEventListener('touchstart', (e) => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    isHorizontal = false;
-  }, { passive: true });
-
-  li.addEventListener('touchmove', (e) => {
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const diffX = currentX - startX;
-    const diffY = currentY - startY;
-
-    if (!isHorizontal && Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-      isHorizontal = true;
-    }
-
-    if (isHorizontal && diffX > 0) {
-      const moveX = Math.min(diffX, 75);
-      if (swipeContent) swipeContent.style.transform = `translateX(${moveX}px)`;
-    }
-  }, { passive: true });
-
-  li.addEventListener('touchend', (e) => {
-    const endX = e.changedTouches[0].clientX;
-    const diffX = endX - startX;
-
-    if (swipeContent) swipeContent.style.transform = '';
-    if (isHorizontal && diffX > 40) {
-      li.classList.add('swiped-right');
-    } else {
-      li.classList.remove('swiped-right');
-    }
-  });
-
-  if (swipeDeleteBtn) {
-    swipeDeleteBtn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      if (confirm(`'${track.title}' 곡을 보관함에서 삭제하시겠습니까?`)) {
-        await db.deleteTrack(track.id);
-        await renderAllViews();
-      }
-    });
-  }
-}
 
 // 1. Library (All Songs)
 async function renderLibrary(searchFilter = '') {
@@ -331,38 +279,27 @@ async function renderLibrary(searchFilter = '') {
     li.className = `track-item ${state.currentIndex >= 0 && state.currentTrackList[state.currentIndex]?.id === track.id ? 'playing' : ''}`;
     
     li.innerHTML = `
-      <div class="track-item-swipe-delete" data-id="${track.id}" title="삭제">
-        <i class="fa-regular fa-trash-can"></i>
+      ${getTrackCoverHTML(track)}
+      <div class="track-item-info">
+        <div class="track-item-title">${escapeHtml(track.title)}</div>
+        <div class="track-item-artist">${escapeHtml(track.artist)}</div>
       </div>
-      <div class="track-item-swipe-content">
-        ${getTrackCoverHTML(track)}
-        <div class="track-item-info">
-          <div class="track-item-title">${escapeHtml(track.title)}</div>
-          <div class="track-item-artist">${escapeHtml(track.artist)}</div>
-        </div>
-        <div class="track-item-duration">${formatTime(track.duration)}</div>
-        <div class="track-item-actions">
-          <button class="btn-icon action-fav ${track.isFavorite ? 'active' : ''}" data-id="${track.id}">
-            <i class="${track.isFavorite ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
-          </button>
-          <button class="btn-icon action-add-playlist" data-id="${track.id}">
-            <i class="fa-solid fa-list-ul"></i>
-          </button>
-          <button class="btn-icon action-delete" data-id="${track.id}">
-            <i class="fa-regular fa-trash-can"></i>
-          </button>
-        </div>
+      <div class="track-item-duration">${formatTime(track.duration)}</div>
+      <div class="track-item-actions">
+        <button class="btn-icon action-fav ${track.isFavorite ? 'active' : ''}" data-id="${track.id}">
+          <i class="${track.isFavorite ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+        </button>
+        <button class="btn-icon action-add-playlist" data-id="${track.id}">
+          <i class="fa-solid fa-list-ul"></i>
+        </button>
+        <button class="btn-icon action-delete" data-id="${track.id}">
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
       </div>
     `;
 
-    attachSwipeToDelete(li, track);
-
     li.addEventListener('click', (e) => {
-      if (e.target.closest('.track-item-actions') || e.target.closest('.track-item-swipe-delete')) return;
-      if (li.classList.contains('swiped-right')) {
-        li.classList.remove('swiped-right');
-        return;
-      }
+      if (e.target.closest('.track-item-actions')) return;
       playTrack(track, filtered, filtered.indexOf(track));
     });
 
@@ -1277,32 +1214,23 @@ function setupEventListeners() {
     }
   });
 
-  // Album Art 3D Flip Card Toggle & Lyrics Scroll
-  const playerArtContainer = document.getElementById('player-art-container');
+  // Album Art 3D Flip Card Toggle (Front image & Back footer return button)
+  const flipCardFront = document.querySelector('.flip-card-front');
+  const lyricsFooter = document.querySelector('.lyrics-footer');
   const playerArtFlip = document.getElementById('player-art-flip');
-  const playerLyricsText = document.getElementById('player-lyrics-text');
 
-  if (playerArtContainer && playerArtFlip) {
-    playerArtContainer.addEventListener('click', (e) => {
-      // Don't flip card back if user is scrolling inside lyrics text box
-      if (e.target.closest('#player-lyrics-text')) return;
-      playerArtFlip.classList.toggle('flipped');
+  if (flipCardFront && playerArtFlip) {
+    flipCardFront.addEventListener('click', (e) => {
+      e.stopPropagation();
+      playerArtFlip.classList.add('flipped');
     });
   }
 
-  if (playerLyricsText) {
-    playerLyricsText.addEventListener('click', (e) => {
+  if (lyricsFooter && playerArtFlip) {
+    lyricsFooter.addEventListener('click', (e) => {
       e.stopPropagation();
+      playerArtFlip.classList.remove('flipped');
     });
-    playerLyricsText.addEventListener('touchstart', (e) => {
-      e.stopPropagation();
-    }, { passive: true });
-    playerLyricsText.addEventListener('touchmove', (e) => {
-      e.stopPropagation();
-    }, { passive: true });
-    playerLyricsText.addEventListener('wheel', (e) => {
-      e.stopPropagation();
-    }, { passive: true });
   }
 
   btnFavorite.addEventListener('click', async () => {
