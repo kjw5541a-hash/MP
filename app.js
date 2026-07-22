@@ -1,7 +1,7 @@
 import * as db from './db.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '4.6'; // Remove player-wrapper card styling in neumorphic theme release
+const APP_VERSION = '4.7'; // Always visible mini player for library, playlists, favorites release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -202,10 +202,12 @@ async function renderLibrary(searchFilter = '') {
   
   libraryList.innerHTML = '';
   
-  const filtered = tracks.filter(t => 
-    t.title.toLowerCase().includes(searchFilter.toLowerCase()) || 
-    t.artist.toLowerCase().includes(searchFilter.toLowerCase())
-  );
+  const searchNormalized = (searchFilter || '').normalize('NFC').toLowerCase();
+  const filtered = tracks.filter(t => {
+    const title = (t.title || '').normalize('NFC').toLowerCase();
+    const artist = (t.artist || '').normalize('NFC').toLowerCase();
+    return title.includes(searchNormalized) || artist.includes(searchNormalized);
+  });
 
   if (filtered.length === 0) {
     libraryEmpty.style.display = 'flex';
@@ -349,7 +351,10 @@ async function renderFavorites() {
       </div>
       <div class="track-item-duration">${formatTime(track.duration)}</div>
       <div class="track-item-actions">
-        <button class="btn-icon action-unfav" data-id="${track.id}">
+        <button class="btn-icon action-add-playlist" data-id="${track.id}" title="재생목록에 추가">
+          <i class="fa-solid fa-list-ul"></i>
+        </button>
+        <button class="btn-icon action-unfav" data-id="${track.id}" title="즐겨찾기 해제">
           <i class="fa-solid fa-heart-crack"></i>
         </button>
       </div>
@@ -361,6 +366,14 @@ async function renderFavorites() {
     });
 
     favoritesList.appendChild(li);
+  });
+
+  favoritesList.querySelectorAll('.action-add-playlist').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.activeTrackIdForModal = parseInt(btn.dataset.id);
+      openAddToPlaylistModal();
+    });
   });
 
   favoritesList.querySelectorAll('.action-unfav').forEach(btn => {
@@ -461,11 +474,13 @@ function loadTrackMetadata(track) {
     miniArtist.textContent = track.artist;
   }
   updateMiniPlayerVisibility();
+  sendPlaybackStateToNativeWidget(track);
 }
 
 function updateMiniPlayerVisibility() {
   if (miniPlayer) {
-    if (state.hasLoadedTrack && state.activeView !== 'view-player') {
+    const alwaysVisibleViews = ['view-library', 'view-playlists', 'view-favorites'];
+    if (alwaysVisibleViews.includes(state.activeView) || (state.hasLoadedTrack && state.activeView !== 'view-player')) {
       miniPlayer.classList.add('active');
     } else {
       miniPlayer.classList.remove('active');
@@ -647,6 +662,7 @@ function updatePlayButtonUI() {
     btnPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
     if (btnMiniPlay) btnMiniPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
   }
+  sendPlaybackStateToNativeWidget();
 }
 
 // --- FILE IMPORTING MECHANISM ---
@@ -672,7 +688,7 @@ async function importFiles(files) {
 
   for (const file of audioFiles) {
     try {
-      const filenameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      const filenameWithoutExt = (file.name.substring(0, file.name.lastIndexOf('.')) || file.name).normalize('NFC');
       let title = filenameWithoutExt;
       let artist = 'Unknown Artist';
 
@@ -911,6 +927,56 @@ function updateMediaSessionPositionState() {
     });
   }
 }
+
+// --- NATIVE IOS WIDGET BRIDGE ---
+function sendPlaybackStateToNativeWidget(track) {
+  if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.widgetHandler) {
+    const currentTrack = track || state.currentTrackList[state.currentIndex];
+    const widgetData = {
+      title: currentTrack ? currentTrack.title : '재생 중인 곡 없음',
+      artist: currentTrack ? currentTrack.artist : '음악을 선택해 주세요',
+      isPlaying: state.isPlaying,
+      duration: audio.duration || (currentTrack ? currentTrack.duration : 0),
+      currentTime: audio.currentTime || 0
+    };
+    try {
+      window.webkit.messageHandlers.widgetHandler.postMessage(widgetData);
+    } catch (e) {
+      console.error('Failed to post message to iOS widgetHandler:', e);
+    }
+  }
+}
+
+// Expose widget action trigger globally to be invoked from Swift native side
+window.handleWidgetAction = function(action) {
+  if (action === 'playpause') {
+    if (state.isPlaying) {
+      audio.pause();
+      state.isPlaying = false;
+      updatePlayButtonUI();
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
+    } else {
+      if (!state.hasLoadedTrack && state.currentTrackList.length > 0) {
+        playTrack(state.currentTrackList[0], state.currentTrackList, 0);
+      } else {
+        audio.play().then(() => {
+          state.isPlaying = true;
+          updatePlayButtonUI();
+          if ('mediaSession' in navigator) {
+            navigator.mediaSession.playbackState = 'playing';
+          }
+        }).catch(err => console.error('Widget play action failed:', err));
+      }
+    }
+  } else if (action === 'next') {
+    nextTrack();
+  } else if (action === 'prev') {
+    prevTrack();
+  }
+};
+
 
 // --- LISTENERS SETUP ---
 function setupAudioListeners() {
