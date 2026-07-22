@@ -2,7 +2,7 @@ import * as db from './db.js';
 import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '5.1'; // Floating settings menu, LTR swipe delete, lyrics scroll, purple glow removal release
+const APP_VERSION = '5.2'; // Event listener initialization crash fix release
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
@@ -911,8 +911,8 @@ async function handleFolderImport(e) {
 
 // --- THEME MANAGEMENT ENGINE ---
 function toggleTheme(e) {
-  e.stopPropagation();
-  themeMenu.classList.toggle('active');
+  if (e) e.stopPropagation();
+  if (themeMenu) themeMenu.classList.toggle('active');
 }
 
 function applyTheme(themeName) {
@@ -924,7 +924,8 @@ function applyTheme(themeName) {
     document.body.classList.add('theme-neumorphic');
   }
   
-  themeMenuItems.forEach(item => {
+  const allThemeMenuItems = document.querySelectorAll('.theme-menu-item');
+  allThemeMenuItems.forEach(item => {
     item.classList.toggle('active', item.dataset.theme === themeName);
   });
   
@@ -940,9 +941,11 @@ function applyTheme(themeName) {
   if (touchIcon) touchIcon.href = `/icon-${themeName}.png`;
   if (manifestLink) manifestLink.href = `/manifest-${themeName}.json`;
   
-  updateThemeToggleIcon(themeName);
+  if (btnThemeToggle) {
+    updateThemeToggleIcon(themeName);
+  }
   localStorage.setItem('mp-theme', themeName);
-  themeMenu.classList.remove('active');
+  if (themeMenu) themeMenu.classList.remove('active');
   
   // Sync the Lock Screen/Dynamic Island background artwork to matching theme icon
   if (state.currentIndex >= 0 && state.currentTrackList.length > 0) {
@@ -954,6 +957,7 @@ function applyTheme(themeName) {
 }
 
 function updateThemeToggleIcon(themeName) {
+  if (!btnThemeToggle) return;
   if (themeName === 'glass') {
     btnThemeToggle.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
   } else if (themeName === 'neumorphic') {
@@ -1172,11 +1176,12 @@ function setupAudioListeners() {
 }
 
 function setupEventListeners() {
-  folderInput.addEventListener('change', handleFolderImport);
-  btnThemeToggle.addEventListener('click', toggleTheme);
+  if (folderInput) folderInput.addEventListener('change', handleFolderImport);
+  if (btnThemeToggle) btnThemeToggle.addEventListener('click', toggleTheme);
 
   // Theme dropdown item click handlers
-  themeMenuItems.forEach(item => {
+  const allThemeMenuItems = document.querySelectorAll('.theme-menu-item');
+  allThemeMenuItems.forEach(item => {
     item.addEventListener('click', () => {
       applyTheme(item.dataset.theme);
     });
@@ -1184,7 +1189,7 @@ function setupEventListeners() {
 
   // Close theme menu when clicking outside of toggle button and dropdown
   window.addEventListener('click', (e) => {
-    if (!e.target.closest('#theme-toggle') && !e.target.closest('#theme-menu')) {
+    if (themeMenu && !e.target.closest('#theme-toggle') && !e.target.closest('#theme-menu')) {
       themeMenu.classList.remove('active');
     }
   });
