@@ -2,7 +2,7 @@ import * as db from './db.js';
 import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '5.5'; // Dynamic viewport height, lyrics WebKit scroll fix, neumorphic blue palette release
+const APP_VERSION = '5.6'; // 2D panel lyrics scroll, landscape overlay, dynamic viewport height
 
 // --- DYNAMIC VIEWPORT HEIGHT FOR IOS SAFE AREA ---
 function updateViewportHeight() {
@@ -1225,46 +1225,33 @@ function setupEventListeners() {
     }
   });
 
-  // Album Art 3D Flip Card Toggle (Check lyrics existence before flip)
+  // Album Art 2D Panel Toggle (Cover ↔ Lyrics)
   const playerArtContainer = document.getElementById('player-art-container');
-  const playerArtFlip = document.getElementById('player-art-flip');
-  const playerLyricsText = document.getElementById('player-lyrics-text');
+  const artPanelFront = document.getElementById('art-panel-front');
+  const artPanelBack = document.getElementById('art-panel-back');
+  const lyricsFooterBtn = document.getElementById('lyrics-footer-btn');
 
-  if (playerArtContainer && playerArtFlip) {
-    playerArtContainer.addEventListener('click', (e) => {
-      // If clicking inside lyrics text box while flipped, allow touch scrolling without flipping back
-      if (playerArtFlip.classList.contains('flipped') && e.target.closest('#player-lyrics-text')) {
-        return;
-      }
-
-      // If already flipped to back, clicking anywhere outside lyrics body flips back to cover
-      if (playerArtFlip.classList.contains('flipped')) {
-        playerArtFlip.classList.remove('flipped');
-        return;
-      }
-
-      // Front side: Check if current track has lyrics before flipping
+  // Tap cover image → show lyrics (if available)
+  if (artPanelFront && playerArtContainer) {
+    artPanelFront.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (state.currentIndex >= 0 && state.currentTrackList[state.currentIndex]) {
         const currentTrack = state.currentTrackList[state.currentIndex];
         if (currentTrack.lyrics && currentTrack.lyrics.trim().length > 0) {
-          playerArtFlip.classList.add('flipped');
+          playerArtContainer.classList.add('show-lyrics');
         } else {
           alert('현재 재생 중인 곡에 등록된 가사가 없습니다.');
         }
-      } else {
-        alert('재생 중인 곡이 없습니다. 보관함에서 노래를 먼저 재생해 주세요.');
       }
     });
   }
 
-  // Prevent touchmove inside lyrics text box from bubbling up
-  if (playerLyricsText) {
-    playerLyricsText.addEventListener('touchstart', (e) => {
+  // Tap footer "돌아가기" → show cover
+  if (lyricsFooterBtn && playerArtContainer) {
+    lyricsFooterBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-    }, { passive: true });
-    playerLyricsText.addEventListener('touchmove', (e) => {
-      e.stopPropagation();
-    }, { passive: true });
+      playerArtContainer.classList.remove('show-lyrics');
+    });
   }
 
   btnFavorite.addEventListener('click', async () => {

@@ -73,18 +73,18 @@
       <!-- VIEW 1: NOW PLAYING -->
       <section id="view-player" class="content-view active">
         <div class="player-wrapper">
-          <!-- Album Art & Lyrics Flip Container -->
+          <!-- Album Art & Lyrics 2D Fade Container -->
           <div class="album-art-container" id="player-art-container" title="터치하여 가사 보기">
             <div class="album-art-glow"></div>
-            <div class="flip-card-inner" id="player-art-flip">
-              <div class="flip-card-front">
-                <img src="/icon-512.png" alt="Album Art" id="player-art" class="player-art">
-              </div>
-              <div class="flip-card-back">
-                <div class="lyrics-header"><i class="fa-solid fa-align-left"></i> 가사</div>
-                <div id="player-lyrics-text" class="lyrics-body">등록된 가사가 없습니다.</div>
-                <div class="lyrics-footer"><i class="fa-solid fa-rotate-left"></i> 터치하여 커버로 돌아가기</div>
-              </div>
+            <!-- Cover Image (Front) -->
+            <div class="art-panel art-panel-front" id="art-panel-front">
+              <img src="/icon-512.png" alt="Album Art" id="player-art" class="player-art">
+            </div>
+            <!-- Lyrics (Back) -->
+            <div class="art-panel art-panel-back" id="art-panel-back">
+              <div class="lyrics-header"><i class="fa-solid fa-align-left"></i> 가사</div>
+              <div id="player-lyrics-text" class="lyrics-body">등록된 가사가 없습니다.</div>
+              <div class="lyrics-footer" id="lyrics-footer-btn"><i class="fa-solid fa-rotate-left"></i> 터치하여 커버로 돌아가기</div>
             </div>
           </div>
 
@@ -296,6 +296,15 @@
         </div>
         <button id="settings-save-btn" class="btn btn-primary" style="width: 100%; justify-content: center; height: 38px; border-radius: 8px;"><i class="fa-solid fa-floppy-disk"></i> 저장</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Landscape Orientation Warning Overlay -->
+  <div id="landscape-overlay" class="landscape-overlay">
+    <div class="landscape-overlay-content">
+      <i class="fa-solid fa-mobile-screen" style="font-size: 48px; margin-bottom: 16px;"></i>
+      <p>📱 세로 모드에서 사용해 주세요</p>
+      <small>화면을 세로로 돌려주세요</small>
     </div>
   </div>
 
