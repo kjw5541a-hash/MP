@@ -2,7 +2,18 @@ import * as db from './db.js';
 import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '5.4'; // Lyrics check on tap, logo visibility, portrait orientation, theme button release
+const APP_VERSION = '5.5'; // Dynamic viewport height, lyrics WebKit scroll fix, neumorphic blue palette release
+
+// --- DYNAMIC VIEWPORT HEIGHT FOR IOS SAFE AREA ---
+function updateViewportHeight() {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+window.addEventListener('resize', updateViewportHeight);
+window.addEventListener('orientationchange', () => {
+  setTimeout(updateViewportHeight, 150);
+});
+updateViewportHeight();
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');

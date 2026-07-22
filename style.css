@@ -1169,14 +1169,14 @@ body.theme-neumorphic {
   --border-color: rgba(255, 255, 255, 0.7);
   --border-color-glow: rgba(90, 103, 216, 0.15);
   
-  --primary-color: #6b46c1; /* Soft royal purple */
-  --primary-gradient: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  --accent-color: #ff5e3a;  /* Premium Neumorphic Coral */
-  --accent-gradient: linear-gradient(135deg, #ff5e3a 0%, #ee3a1f 100%);
+  --primary-color: #2563eb; /* Clean Azure Blue */
+  --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  --accent-color: #0284c7;  /* Deep Cyan Accent */
+  --accent-gradient: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   
-  --text-main: #3d495c;
-  --text-muted: #718096;
-  --text-dark: #1a202c;
+  --text-main: #2c3e50;
+  --text-muted: #64748b;
+  --text-dark: #1e293b;
   
   background-color: var(--bg-color);
   color: var(--text-main);
@@ -1632,6 +1632,18 @@ body.theme-neumorphic .header-btn.active {
   transform: rotateY(180deg);
 }
 
+.flip-card-inner.flipped .flip-card-front {
+  pointer-events: none !important;
+  visibility: hidden !important;
+  display: none !important;
+}
+
+.flip-card-inner.flipped .flip-card-back {
+  pointer-events: auto !important;
+  visibility: visible !important;
+  z-index: 50 !important;
+}
+
 .flip-card-front,
 .flip-card-back {
   position: absolute;
@@ -1652,7 +1664,7 @@ body.theme-neumorphic .header-btn.active {
   transform: rotateY(180deg);
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 14px;
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
   backdrop-filter: blur(24px);
@@ -1660,6 +1672,7 @@ body.theme-neumorphic .header-btn.active {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   border-radius: 24px;
+  box-sizing: border-box;
 }
 
 body.theme-neumorphic .flip-card-back {
