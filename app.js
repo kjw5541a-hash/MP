@@ -2,7 +2,7 @@ import * as db from './db.js';
 import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '5.6'; // 2D panel lyrics scroll, landscape overlay, dynamic viewport height
+const APP_VERSION = '5.7'; // Performance optimization, version display, file independence verification
 
 // --- DYNAMIC VIEWPORT HEIGHT FOR IOS SAFE AREA ---
 function updateViewportHeight() {
@@ -14,6 +14,10 @@ window.addEventListener('orientationchange', () => {
   setTimeout(updateViewportHeight, 150);
 });
 updateViewportHeight();
+
+// Display version in header
+const logoVersionEl = document.getElementById('logo-version');
+if (logoVersionEl) logoVersionEl.textContent = `v${APP_VERSION}`;
 
 (async function checkAppVersion() {
   const savedVersion = localStorage.getItem('mp-app-version');
