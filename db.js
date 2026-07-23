@@ -80,6 +80,39 @@ export async function getAllTracks() {
   });
 }
 
+// Lightweight version: returns all tracks WITHOUT audioBlob (for fast search/render)
+export async function getAllTracksMeta() {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['tracks'], 'readonly');
+    const store = transaction.objectStore('tracks');
+    const request = store.openCursor();
+    const results = [];
+    
+    request.onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        const { audioBlob, ...meta } = cursor.value;
+        results.push(meta);
+        cursor.continue();
+      } else {
+        resolve(results);
+      }
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+export async function getTrack(trackId) {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['tracks'], 'readonly');
+    const store = transaction.objectStore('tracks');
+    const request = store.get(trackId);
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
 export async function deleteTrack(trackId) {
   const db = await initDB();
   return new Promise((resolve, reject) => {

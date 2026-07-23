@@ -212,8 +212,8 @@ body {
   transform: translateY(15px);
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
-  overflow-y: auto;
-  padding: 8px 20px calc(var(--safe-bottom) + 152px) 20px;
+  overflow: hidden;
+  padding: 8px 20px 0 20px;
   display: flex;
   flex-direction: column;
 }
@@ -234,6 +234,9 @@ body {
   max-width: 450px;
   margin: 0 auto;
   width: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--safe-bottom) + 152px);
 }
 
 .album-art-container {
@@ -281,7 +284,7 @@ body {
 }
 
 .player-title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   margin-bottom: 6px;
   white-space: nowrap;
@@ -462,6 +465,7 @@ body {
   flex-direction: column;
   gap: 12px;
   margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 .view-header h2 {
@@ -493,9 +497,13 @@ body {
   flex: 1;
 }
 
-.track-list-container {
+.track-list-container,
+.playlist-grid-container,
+.similar-tab-wrapper {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--safe-bottom) + 152px);
 }
 
 .track-list {

@@ -2,7 +2,7 @@ import * as db from './db.js';
 import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js';
 
 // --- VERSION CONTROL & CACHE BUSTING ---
-const APP_VERSION = '5.7'; // Performance optimization, version display, file independence verification
+const APP_VERSION = '5.8'; // Search performance optimization (debouncing + metadata caching), 24px title, fixed view header scroll layout
 
 // --- DYNAMIC VIEWPORT HEIGHT FOR IOS SAFE AREA ---
 function updateViewportHeight() {
@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await renderAllViews();
     
     // Load last playing track state from DB if available
-    const tracks = await db.getAllTracks();
+    const tracks = await db.getAllTracksMeta();
     if (tracks.length > 0) {
       loadTrackMetadata(tracks[0]);
       state.currentTrackList = tracks;
@@ -239,20 +239,24 @@ function readAudioMetadata(file) {
   });
 }
 
+let cachedTracksMeta = null;
+
 // --- RENDER VIEWS ---
 async function renderAllViews() {
+  cachedTracksMeta = null;
   await Promise.all([
-    renderLibrary(),
+    renderLibrary('', true),
     renderPlaylists(),
     renderFavorites()
   ]);
 }
 
-
-
 // 1. Library (All Songs)
-async function renderLibrary(searchFilter = '') {
-  let tracks = await db.getAllTracks();
+async function renderLibrary(searchFilter = '', forceRefresh = false) {
+  if (!cachedTracksMeta || forceRefresh) {
+    cachedTracksMeta = await db.getAllTracksMeta();
+  }
+  let tracks = [...cachedTracksMeta];
   
   // Sort tracks according to localStorage custom order
   const orderStr = localStorage.getItem('mp-track-order');
@@ -401,7 +405,7 @@ async function renderPlaylists() {
 
 // 3. Favorites View
 async function renderFavorites() {
-  const tracks = await db.getAllTracks();
+  const tracks = await db.getAllTracksMeta();
   const favorites = tracks.filter(t => t.isFavorite);
   favoritesList.innerHTML = '';
 
@@ -467,7 +471,7 @@ async function openPlaylistDetail(playlist) {
   playlistDetailList.innerHTML = '';
   playlistDetailSubview.classList.add('active');
 
-  const allTracks = await db.getAllTracks();
+  const allTracks = await db.getAllTracksMeta();
   const playlistTracks = playlist.trackIds
     .map(id => allTracks.find(t => t.id === id))
     .filter(Boolean);
@@ -583,9 +587,21 @@ function updateMiniPlayerVisibility() {
   }
 }
 
-function playTrack(track, trackList, index) {
+async function playTrack(track, trackList, index) {
   state.currentTrackList = [...trackList];
   state.currentIndex = index;
+  
+  if (!track.audioBlob) {
+    try {
+      const fullTrack = await db.getTrack(track.id);
+      if (fullTrack && fullTrack.audioBlob) {
+        track = fullTrack;
+        state.currentTrackList[index] = fullTrack;
+      }
+    } catch (e) {
+      console.error('Failed to load audioBlob for track:', e);
+    }
+  }
   
   loadTrackMetadata(track);
   
@@ -630,7 +646,15 @@ async function restoreAudioPlayback() {
     if (!audio.src || audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
       console.log('iOS WebKit Eviction 감지: 끊어진 재생 세션을 복구합니다.');
       
-      const currentTrack = state.currentTrackList[state.currentIndex];
+      let currentTrack = state.currentTrackList[state.currentIndex];
+      if (!currentTrack.audioBlob) {
+        const fullTrack = await db.getTrack(currentTrack.id);
+        if (fullTrack && fullTrack.audioBlob) {
+          currentTrack = fullTrack;
+          state.currentTrackList[state.currentIndex] = fullTrack;
+        }
+      }
+      
       const savedTime = audio.currentTime; // 백그라운드 전환 직전 재생 위치 캐치
       
       if (state.audioObjectUrl) {
@@ -1182,8 +1206,12 @@ function setupEventListeners() {
     });
   });
 
+  let searchDebounceTimer = null;
   librarySearch.addEventListener('input', (e) => {
-    renderLibrary(e.target.value);
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      renderLibrary(e.target.value);
+    }, 200);
   });
 
   btnPlay.addEventListener('click', togglePlay);
